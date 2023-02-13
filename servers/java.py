@@ -1,11 +1,12 @@
 from mcstatus import JavaServer
 from mcstatus.pinger import PingResponse
 from VARS import VARS
-from database import ServerDb
 from time import time
 import base64
 
-class ServerMgr:
+from database.ServerDb import ServerDb
+
+class JavaServerManager:
     name: str
     ip: str
     port: int 
@@ -30,7 +31,11 @@ class ServerMgr:
         
 
     def add_data_db(self):
-        status = self.server.lookup(self.ip).status()
+        try:
+            status = self.server.lookup(self.ip).status()
+        except:
+            print("failed to grab !")
+            return #just continue another time if fail
         nulldict = self._build_nulldict(status)
         
         

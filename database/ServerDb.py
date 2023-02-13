@@ -1,6 +1,4 @@
-import sqlite3
-from sqlite3 import Connection, Error, Cursor
-import base64
+from sqlite3 import Connection, Cursor
 
 class ServerDb:
     name: str
@@ -49,29 +47,12 @@ class ServerDb:
                 self.last_values[key] = null_previous[key]
         
         query = f"""INSERT INTO {self.name} VALUES (?,?,?,?,?,?,?,?,?);"""
+        
+        data = (save_time, players_on, players_max, ping, players_sample) + tuple(null_previous.values())
 
-        dataa = (save_time, players_on, players_max, ping, players_sample, null_previous["version_protocol"], null_previous["version_name"], null_previous["motd"], null_previous["favicon"])
+        print(data[:-1])
 
-        print(dataa[:-1])
-
-        self.cursor.execute(query, dataa)
+        self.cursor.execute(query, data)
         self.connection.commit()
-
-
-class DbManager:
-    connection: Connection
-
-    def __init__(self, server_db_type="java"):
-        self.create_connection(f"z_{server_db_type}_servers.db")
-
-    def create_connection(self, db_file: str) -> Connection:
-        try:
-            self.connection = sqlite3.connect(db_file)
-            print(f"Successfully connected to sqlite (v{sqlite3.version})")
-        except Error as e:
-            print(e)
-
-    def get_server_db(self, server_name: str) -> ServerDb:
-        return ServerDb(server_name, self.connection)
 
 
