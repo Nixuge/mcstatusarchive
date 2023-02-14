@@ -1,7 +1,7 @@
 from mcstatus import BedrockServer
 from VARS import VARS
 
-from database.servers.JavaDb import JavaDb
+from database.servers.BedrockDb import BedrockDb
 from status.BedrockStatus import BedrockStatus
 
 class BedrockServerManager:
@@ -9,7 +9,7 @@ class BedrockServerManager:
     ip: str
     port: int 
     server: BedrockServer
-    db: JavaDb
+    db: BedrockDb
 
     def __init__(self, name: str, ip: str, port: int = 19132):
         self.name = name
@@ -22,6 +22,7 @@ class BedrockServerManager:
     def add_data_db(self):
         try:
             status = self.server.lookup(f"{self.ip}").status()
+            # print(f"Debug: Got a lookup successfully for {self.name}")
         except:
             print("Failed to grab !")
             return # just continue another time if fail

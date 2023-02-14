@@ -20,10 +20,10 @@ class JavaServerManager:
         self.db = VARS.db_manager.get_server_db(name)
     
 
-    def add_data_db(self):
+    async def add_data_db(self):
         try:
             status = self.server.lookup(f"{self.ip}").status()
-            print("owowo")
+            # print(f"Debug: Got a lookup successfully for {self.name}")
         except:
             print("Failed to grab !")
             return # just continue another time if fail

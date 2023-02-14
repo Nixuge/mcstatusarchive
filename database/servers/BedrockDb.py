@@ -2,7 +2,7 @@ import database.queries.Bedrock as Queries
 from status.BedrockStatus import BedrockStatus
 from database.servers.Base import BaseDb
 
-class JavaDb(BaseDb):
+class BedrockDb(BaseDb):
     def init_server_table(self) -> None:
         self.cursor.execute(Queries.get_create_table_query(self.name))
 
@@ -14,5 +14,6 @@ class JavaDb(BaseDb):
 
         self.cursor.execute(query, data)
         self.connection.commit()
+        # print(f"Debug: Added a key successfully for {self.name}")
 
 

@@ -1,5 +1,6 @@
 import sqlite3
 from sqlite3 import Connection, Error
+from database.servers.BedrockDb import BedrockDb
 
 from database.servers.JavaDb import JavaDb
 
@@ -18,5 +19,8 @@ class DbManager:
         except Error as e:
             print(e)
 
-    def get_server_db(self, server_name: str) -> JavaDb:
-        return JavaDb(server_name, self.connection)
+    def get_server_db(self, server_name: str) -> JavaDb | BedrockDb:
+        if self.server_db_type == "java":
+            return JavaDb(server_name, self.connection)
+        else:
+            return BedrockDb(server_name, self.connection)

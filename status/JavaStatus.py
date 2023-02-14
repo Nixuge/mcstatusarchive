@@ -23,13 +23,16 @@ class JavaStatus(Status):
         self.players_on = status.players.online
         self.players_max = status.players.max
         self.ping = int(status.latency)
+        #TODO: Better support for pingresponses player sample, see cubecraft in the db
         self.players_sample = str(status.players.sample)
 
         self.version_protocol = status.version.protocol
         self.version_name = status.version.name
         self.motd = status.description
-        self.favicon = base64.decodebytes(bytes(status.favicon.split(',')[-1], "ascii"))
-
+        if status.favicon:
+            self.favicon = base64.decodebytes(bytes(status.favicon.split(',')[-1], "ascii"))
+        else:
+            self.favicon = "No favicon."
         self.current_values = {
             "version_protocol": self.version_protocol,
             "version_name": self.version_name, 
@@ -39,11 +42,4 @@ class JavaStatus(Status):
 
         self.normal_values_tuple = (self.save_time, self.players_on, self.players_max, self.ping, self.players_sample)
         self.null_values_tuple = (self.version_protocol, self.version_name, self.motd, self.favicon)
-
-
-    def get_data_tuple(self, previous_values: dict) -> tuple[bool, tuple]:
-        if self._has_property_changed(previous_values):
-            return True, self.normal_values_tuple + self.null_values_tuple
-        else:
-            return False, self.normal_values_tuple + (None, None, None, None)
-        
+        self.null_null_tuple = (None, None, None, None)
