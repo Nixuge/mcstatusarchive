@@ -5,17 +5,14 @@ class Status:
     normal_values_tuple: tuple
     null_values_tuple: tuple
 
-    def _has_propety_changed(self, previous_values: dict):
+    def _has_property_changed(self, previous_values: dict):
         for key, old_value in previous_values.items():
             if self.current_values.get(key) != old_value:
+                print("WENT TRUE!!!")
+                input()
                 return True
         return False
     
     @abstractmethod
-    @staticmethod
-    def get_query():
-        pass
-
-    @abstractmethod
-    def get_value_tuple(self, previous_values: dict):
+    def get_data_tuple(self, previous_values: dict):
         pass

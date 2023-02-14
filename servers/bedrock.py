@@ -1,17 +1,15 @@
 from mcstatus import BedrockServer
-from mcstatus.pinger import PingResponse
 from VARS import VARS
-from time import time
-import base64
 
-from database.ServerDb import ServerDb
+from database.servers.JavaDb import JavaDb
+from status.BedrockStatus import BedrockStatus
 
 class BedrockServerManager:
     name: str
     ip: str
     port: int 
     server: BedrockServer
-    db: ServerDb
+    db: JavaDb
 
     def __init__(self, name: str, ip: str, port: int = 19132):
         self.name = name
@@ -21,26 +19,11 @@ class BedrockServerManager:
         self.db = VARS.db_manager_bedrock.get_server_db(name)
     
 
-    def _build_nulldict(self, status: PingResponse):
-        return {
-            "version_protocol": status.version.protocol,
-            "version_name": status.version.name,
-            "motd": status.description,
-            "favicon": base64.decodebytes(bytes(status.favicon.split(',')[-1], "ascii"))
-        }
-        
-
     def add_data_db(self):
-        status = self.server.lookup(self.ip).status()
-        nulldict = self._build_nulldict(status)
+        try:
+            status = self.server.lookup(f"{self.ip}").status()
+        except:
+            print("Failed to grab !")
+            return # just continue another time if fail
         
-        
-
-        self.db.add_server_key(
-            int(time()),
-            status.players.online,
-            status.players.max,
-            int(status.latency),
-            str(status.players.sample),
-            nulldict
-        )
+        self.db.add_server_key(BedrockStatus(status))

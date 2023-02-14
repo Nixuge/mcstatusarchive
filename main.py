@@ -1,26 +1,16 @@
-from mcstatus import BedrockServer
+from mcstatus import BedrockServer, JavaServer
 from servers.java import JavaServerManager
 import time
 
 #for some weird reason need to first instantiate and then lookup
 status = BedrockServer("pe.mineplex.com").lookup("pe.mineplex.com").status()
 
-print(status.version.brand)
-print(status.version.protocol)
-print(status.version.version)
-print(status.gamemode)
-print(status.latency)
-print(status.map)
-print(status.motd)
-print(status.players_max)
-print(status.players_online)
-
 
 hypixel = JavaServerManager("mineplex", "mineplex.com", 25565)
 
 while True:
     hypixel.add_data_db()
-    time.sleep(1)
+    time.sleep(2)
 
 
 # HOW THIS WORKS:

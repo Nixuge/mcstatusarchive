@@ -1,4 +1,4 @@
-from objects.Status import Status
+from status.Status import Status
 from mcstatus.bedrock_status import BedrockServerStatus, BedrockStatusResponse
 
 from mcstatus.pinger import PingResponse
@@ -19,11 +19,12 @@ class BedrockStatus(Status):
     gamemode: str
     map: str
 
-    def __init__(self, status: BedrockStatusResponse, time: int = time()):
-        self.save_time = time
+    def __init__(self, status: BedrockStatusResponse):
+        self.save_time = int(time())
+        
         self.players_on = status.players_online
         self.players_max = status.players_max
-        self.ping = status.latency
+        self.ping = int(status.latency)
 
         self.version_protocol = status.version.protocol
         self.version_name = status.version.version
@@ -42,16 +43,11 @@ class BedrockStatus(Status):
         }
 
         self.normal_values_tuple = (self.save_time, self.players_on, self.players_max, self.ping)
-        self.null_values_tuple(self.version_protocol, self.version_name, self.version_brand, self.motd, self.gamemode, self.map)
-
-    
-    @staticmethod
-    def get_query(name: str):
-        return f"""INSERT INTO {name} VALUES (?,?,?,?,?,?,?,?,?,?);"""
+        self.null_values_tuple = (self.version_protocol, self.version_name, self.version_brand, self.motd, self.gamemode, self.map)
 
 
-    def get_value_tuple(self, previous_values: dict):
+    def get_data_tuple(self, previous_values: dict) -> tuple[bool, tuple]:
         if self._has_property_changed(previous_values):
-            return self.normal_values_tuple + (None, None, None, None, None, None)
+            return True, self.normal_values_tuple + self.null_values_tuple
         else:
-            return self.normal_values_tuple + self.null_values_tuple
+            return False, self.normal_values_tuple + (None, None, None, None, None, None)

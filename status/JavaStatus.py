@@ -1,4 +1,4 @@
-from objects.Status import Status
+from status.Status import Status
 
 from mcstatus.pinger import PingResponse
 from time import time
@@ -11,18 +11,20 @@ class JavaStatus(Status):
     players_max: int
     ping: int
     players_sample: str
-    
+
     version_protocol: int
     version_name: str
     motd: str
     favicon: bytes
 
-    def __init__(self, status: PingResponse, time: int = time()):
-        self.save_time = time
+    def __init__(self, status: PingResponse):
+        self.save_time = int(time())
+        
         self.players_on = status.players.online
         self.players_max = status.players.max
-        self.ping = status.latency
+        self.ping = int(status.latency)
         self.players_sample = str(status.players.sample)
+
         self.version_protocol = status.version.protocol
         self.version_name = status.version.name
         self.motd = status.description
@@ -36,16 +38,12 @@ class JavaStatus(Status):
         }
 
         self.normal_values_tuple = (self.save_time, self.players_on, self.players_max, self.ping, self.players_sample)
-        self.null_values_tuple(self.version_protocol, self.version_name, self.motd, self.favicon)
-
-    
-    @staticmethod
-    def get_query(name: str):
-        return f"""INSERT INTO {name} VALUES (?,?,?,?,?,?,?,?,?);"""
+        self.null_values_tuple = (self.version_protocol, self.version_name, self.motd, self.favicon)
 
 
-    def get_value_tuple(self, previous_values: dict):
+    def get_data_tuple(self, previous_values: dict) -> tuple[bool, tuple]:
         if self._has_property_changed(previous_values):
-            return self.normal_values_tuple + (None, None, None, None)
+            return True, self.normal_values_tuple + self.null_values_tuple
         else:
-            return self.normal_values_tuple + self.null_values_tuple
+            return False, self.normal_values_tuple + (None, None, None, None)
+        
