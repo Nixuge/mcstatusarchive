@@ -30,10 +30,16 @@
         "MineHut": "lobby-1.home.minehut.gg",
         "Wynncraft": "play.wynncraft.com",
 
-        "Shotbow": "shotbow.net"
+        "Shotbow": "shotbow.net",
+        "Paladium": "mc.paladium-pvp.fr"
 
     },
     "bugrock": {
-        "Mineplex": "pe.mineplex.com"
+        "Mineplex": "pe.mineplex.com",
+        "Cubecraft": "play.cubecraft.net",
+        "HiveMC": "fr.hivebedrock.network",
+        "Lifeboat": "play.lbsg.net",
+        "InPvP": "play.inpvp.net",
+        "NetherGames": "play.nethergames.org"
     }
 }

@@ -16,6 +16,6 @@ class BedrockDb(BaseDb):
 
         self.cursor.execute(query, data)
         self.connection.commit()
-        # print(f"Debug: Added a key successfully for {self.name}")
+        # print(f"[Debug-BR]: Added a key successfully for {self.name}")
 
 

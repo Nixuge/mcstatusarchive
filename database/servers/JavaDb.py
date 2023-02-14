@@ -22,4 +22,4 @@ class JavaDb(BaseDb):
         
         self.cursor.execute(query, data)
         self.connection.commit()
-        print(f"Debug: Added a key successfully for {self.name}")
+        # print(f"[Debug-Java]: Added a key successfully for {self.name}")

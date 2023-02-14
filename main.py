@@ -36,14 +36,14 @@ async def run_multiple(server_groups: list):
         for group in server_groups:
             tasks.append(asyncio.create_task(save_all(group)))
         
-        await asyncio.sleep(10)
-        print("===done waiting 10s===")
+        await asyncio.sleep(30)
+        print("===done waiting 30s===")
         for task in tasks:
             await task
         print("===done awaiting for tasks leftover===")
         
 
-async def save_all(servers: list[JavaServerManager]):
+async def save_all(servers: list[JavaServerManager | BedrockServerManager]):
     tasks = []
     for server in servers:
         tasks.append(asyncio.create_task(server.add_data_db()))
@@ -53,10 +53,13 @@ async def save_all(servers: list[JavaServerManager]):
     #     await task 
 
 java_servers, pe_servers = load_json()
-thread_lists_java = list(chunks(java_servers))
-thread_lists_pe = list(chunks(pe_servers))
+full = java_servers + pe_servers
+# thread_lists_java = list(chunks(java_servers))
+# thread_lists_pe = list(chunks(pe_servers))
 
-asyncio.run(run_multiple(thread_lists_java))
+full_list = list(chunks(full))
+
+asyncio.run(run_multiple(full_list))
 
 # asyncio.run(java_servers[0].add_data_db())
 
