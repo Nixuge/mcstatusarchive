@@ -1,3 +1,4 @@
+#!/bin/python3
 import asyncio
 from servers.bedrock import BedrockServerManager
 from servers.java import JavaServerManager
