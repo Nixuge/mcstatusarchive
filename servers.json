@@ -1,0 +1,39 @@
+{
+    "java": {
+        "Hypickle": "hypixel.net",
+        "Nixuge": "play.nixuge.me",
+        "Mineplex": "mineplex.com",
+        "Cubecraft": "cubecraft.net",
+
+        "CubeKrowd": "cubekrowd.net",
+        "Funcraft": "funcraft.net",
+        "Pactify": "pactify.fr",
+        "BedwarsPractice": "bedwarspractice.club",
+
+        "Minemen": "eu.minemen.club",
+        "Onecube": "oneCube.com",
+        "PvPGym": "eu.pvpgym.net",
+        "GommeHD": "gommehd.net",
+
+        "Rinaorc": "rinaorc.com",
+        "GTM": "mc-gtm.net",
+        "UniversoCraft": "mc.universocraft.com",
+        "cheatrip": "cheat.rip",
+
+        "OPBlocks": "mc.opblocks.com",
+        "CristalyNetwork": "play.cristalycraft.us",
+        "Hycraft": "mc.hycraft.us",
+        "Timolia": "play.timolia.de",
+
+        "CosmicPrisons": "cosmicprisons.com",
+        "TubNet": "tubnet.gg",
+        "MineHut": "lobby-1.home.minehut.gg",
+        "Wynncraft": "play.wynncraft.com",
+
+        "Shotbow": "shotbow.net"
+
+    },
+    "bugrock": {
+        "Mineplex": "pe.mineplex.com"
+    }
+}

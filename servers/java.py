@@ -23,9 +23,8 @@ class JavaServerManager:
     async def add_data_db(self):
         try:
             status = self.server.lookup(f"{self.ip}").status()
-            # print(f"Debug: Got a lookup successfully for {self.name}")
         except:
-            print("Failed to grab !")
+            print(f"Failed to grab {self.name}!")
             return # just continue another time if fail
         
         self.db.add_server_key(JavaStatus(status))

@@ -1,50 +1,69 @@
 import asyncio
-import threading
 from servers.bedrock import BedrockServerManager
 from servers.java import JavaServerManager
-import time
+import json
 
 #for some weird reason need to first instantiate and then lookup
+#TODO: redo that shitty af multithreading kinda
+#bc its not even multithreading rn
+#if i just give up: just run like 1/2 server per thread and thats all
 
-pe_servers: list[BedrockServerManager] = [
-    # BedrockServerManager("mineplex", "pe.mineplex.com")
-]
 
-java_servers: list[JavaServerManager] = [
-    JavaServerManager("Hypickle", "hypixel.net"),
-    JavaServerManager("Nixuge", "play.nixuge.me"),
-    JavaServerManager("Mineplex", "mineplex.com"),
-    JavaServerManager("Cubecraft", "cubecraft.net"),
-    JavaServerManager("cubekrowd", "cubekrowd.net"),
-]
+def load_json():
+    list_java: list[JavaServerManager] = []
+    list_pe: list[BedrockServerManager] = []
+    with open("servers.json", "r") as file:
+        dico = json.load(file)
+    
+    for value in dico["java"]:
+        list_java.append(JavaServerManager(value, dico["java"][value]))
+    for value in dico["bugrock"]:
+        list_pe.append(BedrockServerManager(value, dico["bugrock"][value]))
 
-def chunks(lst, n = 4):
-    """Yield successive n-sized chunks from lst."""
+    return list_java, list_pe
+
+
+def chunks(lst, n = 2):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
     
+
+
+async def run_multiple(server_groups: list):
+    while True:
+        tasks = []
+        for group in server_groups:
+            tasks.append(asyncio.create_task(save_all(group)))
+        
+        await asyncio.sleep(10)
+        print("===done waiting 10s===")
+        for task in tasks:
+            await task
+        print("===done awaiting for tasks leftover===")
+        
+
+async def save_all(servers: list[JavaServerManager]):
+    tasks = []
+    for server in servers:
+        tasks.append(asyncio.create_task(server.add_data_db()))
+        
+    # in case some tasks are still unfinished after the 10s
+    # for task in tasks:
+    #     await task 
+
+java_servers, pe_servers = load_json()
 thread_lists_java = list(chunks(java_servers))
 thread_lists_pe = list(chunks(pe_servers))
 
+asyncio.run(run_multiple(thread_lists_java))
 
-async def save_all(servers: list):
-    while True:
-        tasks = []
-        for server in java_servers:
-            tasks.append(asyncio.create_task(server.add_data_db()))
+# asyncio.run(java_servers[0].add_data_db())
 
-        await asyncio.sleep(4)
-        
-        # in case some tasks are still unfinished after the 10s
-        for task in tasks:
-            await task 
-     
-for java_thread in thread_lists_java:
-    asyncio.run(save_all(java_thread))
+# async def main():
+#     for key in java_servers:
+#         await key.add_data_db()
 
-
-for pe_thread in thread_lists_pe:
-    asyncio.run(save_all(pe_thread))
+# asyncio.run(main())
 
 
 # HOW THIS WORKS:

@@ -8,12 +8,23 @@ class BaseDb:
     connection: Connection
     cursor: Cursor
     last_values: dict = {}
+    null_keys: tuple
 
     def __init__(self, name: str, connection: Connection):
         self.name = name
         self.connection = connection
         self.cursor = connection.cursor()
         self.init_server_table()
+
+        #todo: fix this
+        #actually rewrite the whole thing prolly
+        for key in self.null_keys:
+            # print(key)
+            self.last_values[key] = self._get_last_db(key)
+        
+        # print(self.last_values.keys())
+        # input()
+            
 
     def _get_last_db(self, column: str) -> str:
         rel = self.cursor.execute(

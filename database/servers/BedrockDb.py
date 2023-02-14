@@ -3,6 +3,8 @@ from status.BedrockStatus import BedrockStatus
 from database.servers.Base import BaseDb
 
 class BedrockDb(BaseDb):
+    null_keys = ("version_protocol", "version_name", "version_brand", "motd", "gamemode", "map")
+
     def init_server_table(self) -> None:
         self.cursor.execute(Queries.get_create_table_query(self.name))
 

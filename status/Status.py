@@ -15,10 +15,6 @@ class Status:
         #         return True
         return False
     
-    @abstractmethod
-    def get_data_tuple(self, previous_values: dict):
-        pass
-
     def get_data_tuple(self, previous_values: dict) -> tuple[bool, tuple]:
         if self._has_property_changed(previous_values):
             return True, self.normal_values_tuple + self.null_values_tuple

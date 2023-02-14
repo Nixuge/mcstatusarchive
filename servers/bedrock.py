@@ -1,6 +1,5 @@
 from mcstatus import BedrockServer
 from VARS import VARS
-
 from database.servers.BedrockDb import BedrockDb
 from status.BedrockStatus import BedrockStatus
 
@@ -19,12 +18,11 @@ class BedrockServerManager:
         self.db = VARS.db_manager_bedrock.get_server_db(name)
     
 
-    def add_data_db(self):
+    async def add_data_db(self):
         try:
             status = self.server.lookup(f"{self.ip}").status()
-            # print(f"Debug: Got a lookup successfully for {self.name}")
         except:
-            print("Failed to grab !")
+            print(f"Failed to grab {self.name}!")
             return # just continue another time if fail
         
         self.db.add_server_key(BedrockStatus(status))
