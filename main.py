@@ -8,7 +8,7 @@ from servers.java import JavaServerManager
 
 # from https://stackoverflow.com/a/26064238
 def wait_processes_timeout(procs: list[Thread]):
-    TIMEOUT = 10
+    TIMEOUT = 30
     start = time.time()
     while time.time() - start <= TIMEOUT:
         if not any(p.is_alive() for p in procs):
