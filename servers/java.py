@@ -1,5 +1,4 @@
 from mcstatus import JavaServer
-from mcstatus.pinger import PingResponse
 from VARS import VARS
 
 from database.servers.JavaDb import JavaDb
@@ -20,7 +19,7 @@ class JavaServerManager:
         self.db = VARS.db_manager.get_server_db(name)
     
 
-    async def add_data_db(self):
+    def add_data_db(self):
         try:
             status = self.server.lookup(f"{self.ip}").status()
         except:

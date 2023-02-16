@@ -20,6 +20,8 @@ class BedrockStatus(Status):
     map: str
 
     def __init__(self, status: BedrockStatusResponse):
+        self.null_args_order = ("version_protocol", "version_name", "version_brand", "motd", "gamemode", "map")
+
         self.save_time = int(time())
         
         self.players_on = status.players_online
@@ -44,4 +46,3 @@ class BedrockStatus(Status):
 
         self.normal_values_tuple = (self.save_time, self.players_on, self.players_max, self.ping)
         self.null_values_tuple = (self.version_protocol, self.version_name, self.version_brand, self.motd, self.gamemode, self.map)
-        self.null_null_tuple = (None, None, None, None, None, None)

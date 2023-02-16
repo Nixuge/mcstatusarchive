@@ -1,16 +1,41 @@
 #!/bin/python3
-import asyncio
+import time
+import json
+from threading import Thread
 from servers.bedrock import BedrockServerManager
 from servers.java import JavaServerManager
-import json
 
-#for some weird reason need to first instantiate and then lookup
-#TODO: redo that shitty af multithreading kinda
-#bc its not even multithreading rn
-#if i just give up: just run like 1/2 server per thread and thats all
+
+# from https://stackoverflow.com/a/26064238
+def wait_processes_timeout(procs: list[Thread]):
+    TIMEOUT = 10
+    start = time.time()
+    while time.time() - start <= TIMEOUT:
+        if not any(p.is_alive() for p in procs):
+            print("    == All processes done! ==")
+            break
+
+        time.sleep(.01)  # Just to avoid hogging the CPU
+    else:
+        # We only enter this if we didn't 'break' above.
+        print(" == Timed out, killing all ==")
+        for p in procs:
+            p.terminate()
+            p.join()
+    
+    while time.time() - start <= TIMEOUT:
+        # Even after the check above, wait for the timeout to end (since we get maps at a fixed time)
+        time.sleep(.01)
+
+
+
+def split_list(lst, n = 2):
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
 
 
 def load_json():
+    # dirty af but working
     list_java: list[JavaServerManager] = []
     list_pe: list[BedrockServerManager] = []
     with open("servers.json", "r") as file:
@@ -23,43 +48,43 @@ def load_json():
 
     return list_java, list_pe
 
-
-def chunks(lst, n = 2):
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
     
 
-
-async def run_multiple(server_groups: list):
-    while True:
-        tasks = []
-        for group in server_groups:
-            tasks.append(asyncio.create_task(save_all(group)))
-        
-        await asyncio.sleep(30)
-        print("===done waiting 30s===")
-        for task in tasks:
-            await task
-        print("===done awaiting for tasks leftover===")
-        
-
-async def save_all(servers: list[JavaServerManager | BedrockServerManager]):
-    tasks = []
+def save_group(servers: list[JavaServerManager | BedrockServerManager]):
     for server in servers:
-        tasks.append(asyncio.create_task(server.add_data_db()))
+        server.add_data_db()
+
+
+if __name__ == "__main__":
+    java_servers, pe_servers = load_json()
+    all_servers = java_servers + pe_servers
+
+    all_servers_groups = list(split_list(all_servers))
+
+    while True:
+        processes = []
+        for group in all_servers_groups:
+            proc = Thread(target=save_group, args=(group, ), )
+            processes.append(proc)
+            proc.start()
         
-    # in case some tasks are still unfinished after the 10s
-    # for task in tasks:
-    #     await task 
 
-java_servers, pe_servers = load_json()
-full = java_servers + pe_servers
-# thread_lists_java = list(chunks(java_servers))
-# thread_lists_pe = list(chunks(pe_servers))
+        
+        print("===== Spawned all processes =====")
+        wait_processes_timeout(processes)
+        print("===== Timeout done waiting ! =====")
 
-full_list = list(chunks(full))
 
-asyncio.run(run_multiple(full_list))
+
+# asyncio.run(save_group(full))
+
+# asyncio.run(main(full_list))
+
+
+# print(full_list)
+
+
+# asyncio.run(run_multiple(full_list))
 
 # asyncio.run(java_servers[0].add_data_db())
 
@@ -67,15 +92,9 @@ asyncio.run(run_multiple(full_list))
 #     for key in java_servers:
 #         await key.add_data_db()
 
-# asyncio.run(main())
-
 
 # HOW THIS WORKS:
 # - the script grabs every info about the server & saves it to db
 # - next time the save runs, if all previous long standing info (motd, version, etc) 
 # --- are the same, just fill those w NULLs (note that playercount still updates)
 # --- However, if just 1 value is different, the whole row update (for easier queries)
-
-#TODO: more flexibility.
-#eg, when a motd is changed, sometimes avoid changing everything
-#tbh will prolly make an option to change it either all or one at a time

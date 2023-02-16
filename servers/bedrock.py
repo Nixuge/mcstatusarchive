@@ -18,7 +18,7 @@ class BedrockServerManager:
         self.db = VARS.db_manager_bedrock.get_server_db(name)
     
 
-    async def add_data_db(self):
+    def add_data_db(self):
         try:
             status = self.server.lookup(f"{self.ip}").status()
         except:

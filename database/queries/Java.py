@@ -5,7 +5,7 @@ def get_create_table_query(name: str) -> str:
                 players_on INT NOT NULL,
                 players_max INT NOT NULL,
                 ping INT NOT NULL,
-                players_sample VARCHAR(255) NOT NULL,
+                players_sample VARCHAR(1024),
 
                 version_protocol INT,
                 version_name VARCHAR(255),

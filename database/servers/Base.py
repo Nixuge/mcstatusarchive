@@ -1,5 +1,6 @@
 from sqlite3 import Connection, Cursor
 from abc import abstractmethod
+import sqlite3
 from typing import Any
 
 
@@ -7,19 +8,20 @@ class BaseDb:
     name: str
     connection: Connection
     cursor: Cursor
-    last_values: dict = {}
+    last_values: dict
     null_keys: tuple
 
     def __init__(self, name: str, connection: Connection):
         self.name = name
         self.connection = connection
+        # print(f"Successfully connected to sqlite (v{sqlite3.version}) for {self.name}")
         self.cursor = connection.cursor()
         self.init_server_table()
 
         #todo: fix this
         #actually rewrite the whole thing prolly
+        self.last_values = {}
         for key in self.null_keys:
-            # print(key)
             self.last_values[key] = self._get_last_db(key)
         
         # print(self.last_values.keys())
@@ -37,8 +39,8 @@ class BaseDb:
     def init_server_table(self) -> None:
         pass
 
-    @abstractmethod
-    def add_server_key(self, status: Any):
-        pass
+    # @abstractmethod
+    # def add_server_key(self, status: Any):
+    #     pass
 
 
