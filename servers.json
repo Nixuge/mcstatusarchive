@@ -1,6 +1,6 @@
 {
     "java": {
-        "Hypickle": "hypixel.net",
+        "Hypixel": "hypixel.net",
         "Nixuge": "play.nixuge.me",
         "Mineplex": "mineplex.com",
         "Cubecraft": "cubecraft.net",
@@ -31,8 +31,14 @@
         "Wynncraft": "play.wynncraft.com",
 
         "Shotbow": "shotbow.net",
-        "Paladium": "mc.paladium-pvp.fr"
+        "Paladium": "mc.paladium-pvp.fr",
+        "UncensoredLibrary": "visit.uncensoredlibrary.com",
+        "MinecraftOnline": "MinecraftOnline.com",
 
+        "TwoBTwoT": "2b2t.org",
+        "NerdNu": "nerd.nu",
+        "NerdNuCreative": "c.nerd.nu",
+        "NerdNuPvE": "p.nerd.nu"
     },
     "bugrock": {
         "Mineplex": "pe.mineplex.com",
