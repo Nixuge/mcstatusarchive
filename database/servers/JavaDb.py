@@ -3,11 +3,8 @@ from status.JavaStatus import JavaStatus
 from database.servers.Base import BaseDb
 
 class JavaDb(BaseDb):
-    def __init__(self, *args):
-        self.null_keys = ("players_sample", "version_protocol", "version_name", "motd", "favicon")
-        super().__init__(*args)
+    db_columns_order = ("save_time", "players_on", "players_max", "ping", "players_sample", "version_protocol", "version_name", "motd", "favicon")
     
-
     def init_server_table(self) -> None:
         self.cursor.execute(Queries.get_create_table_query(self.name))
 

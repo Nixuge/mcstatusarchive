@@ -2,14 +2,14 @@ def get_create_table_query(name: str) -> str:
     return f"""CREATE TABLE IF NOT EXISTS {name} (
                 save_time INT NOT NULL,
 
-                players_on INT NOT NULL,
-                players_max INT NOT NULL,
-                ping INT NOT NULL,
-                players_sample VARCHAR(1024),
+                players_on INT,
+                players_max INT,
+                ping INT,
+                players_sample TEXT,
 
                 version_protocol INT,
                 version_name VARCHAR(255),
-                motd VARCHAR(255),
+                motd TEXT,
                 favicon BLOB(65534),
                 
                 PRIMARY KEY (save_time)
