@@ -57,8 +57,9 @@ def save_group(servers: list[JavaServerManager | BedrockServerManager]):
 
 if __name__ == "__main__":
     java_servers, pe_servers = load_json()
+    # Same start function in both so it's save to mix them in
     all_servers = java_servers + pe_servers
-
+    
     all_servers_groups = list(split_list(all_servers))
 
     while True:
@@ -75,22 +76,6 @@ if __name__ == "__main__":
         print("===== Timeout done waiting ! =====")
 
 
-
-# asyncio.run(save_group(full))
-
-# asyncio.run(main(full_list))
-
-
-# print(full_list)
-
-
-# asyncio.run(run_multiple(full_list))
-
-# asyncio.run(java_servers[0].add_data_db())
-
-# async def main():
-#     for key in java_servers:
-#         await key.add_data_db()
 
 
 # HOW THIS WORKS:

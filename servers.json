@@ -66,7 +66,13 @@
         "Cubecraft": "play.cubecraft.net",
         "HiveMC": "fr.hivebedrock.network",
         "Lifeboat": "play.lbsg.net",
+
         "InPvP": "play.inpvp.net",
-        "NetherGames": "play.nethergames.org"
+        "NetherGames": "play.nethergames.org",
+        "PixelParadise": "play.pixelparadise.gg",
+        "Mineville": "play.inpvp.net",
+
+        "Galaxite": "play.galaxite.net",
+        "HyperLands": "play.hyperlandsmc.net"
     }
 }
