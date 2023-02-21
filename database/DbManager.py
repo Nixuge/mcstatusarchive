@@ -15,9 +15,8 @@ class DbManager:
             raise SystemError("""
 ============================================================
 This program uses sqlite3 in a multithreaded context
-(multiprocessing -> can't change objects, so need threading 100%)
 
-This however means writing to the DB is done in a multithreaded way
+This means writing to the DB is done in a multithreaded way
 
 To avoid data corruption, this program will only launch if sqlite3 is compiled in a way that allows safe multithreaded access to the DB (sqlite.threadsafety = 3)
 
