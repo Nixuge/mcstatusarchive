@@ -29,7 +29,7 @@ def wait_processes_timeout(procs: list[Thread]):
 
 
 
-def split_list(lst, n = 2):
+def split_list(lst, n = 3):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
@@ -83,3 +83,10 @@ if __name__ == "__main__":
 # - next time the save runs, if all previous long standing info (motd, version, etc) 
 # --- are the same, just fill those w NULLs (note that playercount still updates)
 # --- However, if just 1 value is different, the whole row update (for easier queries)
+
+#TODO:
+# docker container containing everythging below
+# actual website/UI to view data
+# -> to avoid SQL injection, do smth like "if input not in trusted_servers" server side
+# fix mem leaks (i think theres one)
+# other sources (from the internet etc) to view old data
