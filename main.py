@@ -3,6 +3,8 @@ import signal
 import time
 import json
 from threading import Thread
+from VARS import VARS
+from VARS_DBQUEUES import DBQUEUES
 from servers.bedrock import BedrockServerManager
 from servers.java import JavaServerManager
 
@@ -64,6 +66,8 @@ def save_group(servers: list[JavaServerManager | BedrockServerManager]):
 
 
 if __name__ == "__main__":
+    DBQUEUES.db_queue_java.start()
+    DBQUEUES.db_queue_bedrock.start()
 
     java_servers, pe_servers = load_json()
     # Same start function in both so it's save to mix them in
@@ -115,3 +119,7 @@ if __name__ == "__main__":
 #TODO:
 # to save even more space, when server is down set playercount to "DOWN"
 # and when the data doesn't change, don't actually save any lines
+
+#TODO:
+# rework again a LOT the structure (eg, remove BedrockDb/JavaDb)
+# since dbqueue now manages the db better and avoids "database is locked" errors

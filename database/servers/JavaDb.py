@@ -1,3 +1,4 @@
+from VARS_DBQUEUES import DBQUEUES
 import database.queries.Java as Queries
 from status.JavaStatus import JavaStatus
 from database.servers.Base import BaseDb
@@ -18,8 +19,8 @@ class JavaDb(BaseDb):
         # print(data[:-1])
         # print(query)
         # print(data)
-        
-        self.cursor.execute(query, data)
-        self.connection.commit()
-        self.connection.serialize()
+        DBQUEUES.db_queue_java.add_instuction(query, data)
+        # self.cursor.execute(query, data)
+        # self.connection.commit()
+        # self.connection.serialize()
         # print(f"[Debug-Java]: Added a key successfully for {self.name}")

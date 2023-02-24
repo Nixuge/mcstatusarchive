@@ -8,7 +8,7 @@ class DbManager:
     connection: Connection
     server_db_type: str
 
-    def __init__(self, server_db_type="java"):
+    def __init__(self, connection: Connection, server_db_type="java"):
         # see https://docs.python.org/3/library/sqlite3.html#sqlite3.threadsafety
         # & eventually https://ricardoanderegg.com/posts/python-sqlite-thread-safety/
         if sqlite3.threadsafety != 3:
@@ -26,8 +26,7 @@ See https://docs.python.org/3/library/sqlite3.html#sqlite3.threadsafety for more
 ============================================================""")
     
         self.server_db_type = server_db_type
-        # self.create_connection(f"z_{server_db_type}_servers.db")
-        self.db_file = f"z_{server_db_type}_servers.db"
+        self.connection = connection
 
     # def create_connection(self, db_file: str) -> Connection:
     #     try:
@@ -38,6 +37,6 @@ See https://docs.python.org/3/library/sqlite3.html#sqlite3.threadsafety for more
 
     def get_server_db(self, server_name: str) -> JavaDb | BedrockDb:
         if self.server_db_type == "java":
-            return JavaDb(server_name, sqlite3.connect(self.db_file, check_same_thread=False, timeout=10))
+            return JavaDb(server_name, self.connection)
         else:
-            return BedrockDb(server_name, sqlite3.connect(self.db_file, check_same_thread=False, timeout=10))
+            return BedrockDb(server_name, self.connection)

@@ -1,3 +1,4 @@
+from VARS_DBQUEUES import DBQUEUES
 import database.queries.Bedrock as Queries
 from status.BedrockStatus import BedrockStatus
 from database.servers.Base import BaseDb
@@ -15,9 +16,11 @@ class BedrockDb(BaseDb):
         if has_changed:
             self.last_values = bedrock_status.current_values
 
-        self.cursor.execute(query, data)
-        self.connection.commit()
-        self.connection.serialize()
+        DBQUEUES.db_queue_bedrock.add_instuction(query, data)
+
+        # self.cursor.execute(query, data)
+        # self.connection.commit()
+        # self.connection.serialize()
         # print(f"[Debug-BR]: Added a key successfully for {self.name}")
 
 
