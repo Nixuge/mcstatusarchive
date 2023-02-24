@@ -38,6 +38,6 @@ See https://docs.python.org/3/library/sqlite3.html#sqlite3.threadsafety for more
 
     def get_server_db(self, server_name: str) -> JavaDb | BedrockDb:
         if self.server_db_type == "java":
-            return JavaDb(server_name, sqlite3.connect(self.db_file, check_same_thread=False))
+            return JavaDb(server_name, sqlite3.connect(self.db_file, check_same_thread=False, timeout=10))
         else:
-            return BedrockDb(server_name, sqlite3.connect(self.db_file, check_same_thread=False))
+            return BedrockDb(server_name, sqlite3.connect(self.db_file, check_same_thread=False, timeout=10))

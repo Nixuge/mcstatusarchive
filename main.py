@@ -114,4 +114,4 @@ if __name__ == "__main__":
 
 #TODO:
 # to save even more space, when server is down set playercount to "DOWN"
-# and when the data doesn't change, don't actually save any line
+# and when the data doesn't change, don't actually save any lines
