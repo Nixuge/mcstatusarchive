@@ -23,12 +23,12 @@ class DbQueue(Thread):
         while True:
             sleep(0.5)
             if len(self.instructions) > 0:
-                count = 0
+                # count = 0
                 for instruction in self.instructions:
-                    count += 1
+                    # count += 1
                     self.cursor.execute(instruction[0], instruction[1])
                     self.instructions.remove(instruction) 
-                print(f"Added {count} values")
+                # print(f"Added {count} values")
 
                 self.connection.commit()
                 self.connection.serialize()
