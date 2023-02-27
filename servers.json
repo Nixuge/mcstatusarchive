@@ -21,7 +21,7 @@
         "cheatrip": "cheat.rip",
 
         "OPBlocks": "mc.opblocks.com",
-        "CristalyNetwork": "play.cristalycraft.us",
+        
         "Hycraft": "mc.hycraft.us",
         "Timolia": "play.timolia.de",
 
@@ -93,7 +93,7 @@
         "anarchy_tf": "anarchy.tf",
         "munchymc_com": "munchymc.com",
         "donutsmp_net": "donutsmp.net",
-        "mc_qplay_cz": "mc.qplay.cz",
+        
 
         "play_teslacraft_org": "play.teslacraft.org",
         "zedarmc_com": "zedarmc.com",
@@ -166,10 +166,10 @@
         "PixelParadise": "play.pixelparadise.gg",
         "Mineville": "play.inpvp.net",
 
-        "Galaxite": "play.galaxite.net",
+        
         "HyperLands": "play.hyperlandsmc.net",
-        "GommeHD": "gommehd.net",
-        "bedrock_nationsglory_fr": "bedrock.nationsglory.fr"
+        "GommeHD": "gommehd.net"
+        
 
     }
 }

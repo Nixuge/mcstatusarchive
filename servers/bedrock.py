@@ -21,8 +21,8 @@ class BedrockServerManager:
     def add_data_db(self):
         try:
             status = self.server.lookup(f"{self.ip}").status()
-        except:
-            print(f"Failed to grab {self.name}!")
+        except Exception as e:
+            print(f"Failed to grab {self.name}! {e}")
             return # just continue another time if fail
         
         self.db.add_server_key(BedrockStatus(status))

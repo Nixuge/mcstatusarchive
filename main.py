@@ -123,3 +123,7 @@ if __name__ == "__main__":
 #TODO:
 # rework again a LOT the structure (eg, remove BedrockDb/JavaDb)
 # since dbqueue now manages the db better and avoids "database is locked" errors
+
+#TODO:
+# use thread signals instead of spawning new threads every time
+# OR EVEN BETTER FUCKING USE ASYNC OR MULTIPROCESSING

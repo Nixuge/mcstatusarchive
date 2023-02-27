@@ -1,0 +1,7 @@
+JAVA:
+"CristalyNetwork": "play.cristalycraft.us",
+"mc_qplay_cz": "mc.qplay.cz",
+
+BEDROCK:
+"Galaxite": "play.galaxite.net",
+"bedrock_nationsglory_fr": "bedrock.nationsglory.fr"
