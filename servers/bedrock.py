@@ -15,8 +15,8 @@ class BedrockServerManager:
         self.ip = ip
         self.port = port
         self.server = BedrockServer(ip, port)
-        self.db = VARS.db_manager_bedrock.get_server_db(name)
-    
+        self.db = VARS.db_manager_bedrock.get_server_db(name) # type: ignore
+ 
 
     def add_data_db(self):
         try:

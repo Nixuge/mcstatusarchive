@@ -6,7 +6,7 @@ from time import sleep
 class DbQueue(Thread):
     # should be thread safe as lists are thread safe
     #TODO: use queue (https://www.geeksforgeeks.org/queue-in-python/ ?)
-    instructions: list[tuple[str, str]] #0 = query, 1 = data
+    instructions: list[tuple[str, list]] #0 = query, 1 = data
     connection: Connection
     cursor: Cursor
 
@@ -16,7 +16,7 @@ class DbQueue(Thread):
         self.connection = connection
         self.cursor = connection.cursor()
 
-    def add_instuction(self, query: str, data: str):
+    def add_instuction(self, query: str, data: list):
         self.instructions.append((query, data))
 
     def run(self) -> None:

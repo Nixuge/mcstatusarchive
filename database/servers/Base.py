@@ -8,8 +8,8 @@ class BaseDb:
     name: str
     connection: Connection
     cursor: Cursor
-    db_columns_order: tuple[str]
-    last_values: list[str]
+    db_columns_order: tuple
+    last_values: list
 
     def __init__(self, name: str, connection: Connection):
         self.name = name
@@ -24,7 +24,7 @@ class BaseDb:
         
             
 
-    def _get_last_db(self, column: str) -> str:
+    def _get_last_db(self, column: str) -> str | None:
         rel = self.cursor.execute(
             f"""SELECT {column} FROM {self.name} WHERE {column} IS NOT NULL ORDER BY save_time DESC LIMIT 1;""")
         result = rel.fetchone()

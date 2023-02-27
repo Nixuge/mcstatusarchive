@@ -16,7 +16,7 @@ class JavaServerManager:
         self.ip = ip
         self.port = port
         self.server = JavaServer(ip, port)
-        self.db = VARS.db_manager.get_server_db(name)
+        self.db = VARS.db_manager.get_server_db(name) # type: ignore
     
 
     def add_data_db(self):

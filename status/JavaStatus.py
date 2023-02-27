@@ -23,7 +23,7 @@ class JavaStatus(Status):
 
         
     @staticmethod
-    def _get_favicon(favicon: str | None) -> str:
+    def _get_favicon(favicon: str | None) -> bytes | str:
         if favicon:
             # return "DISABLED FOR TESTING"
             return base64.decodebytes(bytes(favicon.split(',')[-1], "ascii"))

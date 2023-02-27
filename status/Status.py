@@ -1,7 +1,7 @@
 class Status:
-    current_values: tuple[str]
+    current_values: tuple
     
-    def _get_changed_properties(self, previous_values: tuple[str]) -> list[str]:
+    def _get_changed_properties(self, previous_values: dict) -> list[str]:
         changed_values = []
         for key, value in enumerate(self.current_values):
             if previous_values[key] != value or previous_values[key] == None:
@@ -9,8 +9,8 @@ class Status:
             
         return changed_values
     
-    def get_data_tuple(self, previous_values: dict) -> tuple[bool, tuple]:
-        new_tuple: list[str] = []
+    def get_data_tuple(self, previous_values: dict) -> tuple[bool, list]:
+        new_tuple: list[str | None] = []
 
         changed_values = self._get_changed_properties(previous_values)
 
@@ -19,6 +19,6 @@ class Status:
                 new_tuple.append(self.current_values[index])
             else:
                 new_tuple.append(None)
-        
+     
         # returning a list instead of a tuple, big lie
         return len(changed_values) > 0, new_tuple
