@@ -1,4 +1,5 @@
 *.pyc
 *.db
 *.db-journal
+*.BAK
 info.txt
