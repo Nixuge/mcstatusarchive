@@ -1,4 +1,5 @@
 from sqlite3 import Connection, Cursor
+import sqlite3
 from threading import Thread
 from time import sleep
 
@@ -17,8 +18,8 @@ class DbQueue(Thread):
         super().__init__(None, None, "DbQueueThread") #see thread init (unneeded basically)
         self.instructions = []
         self.important_instructions = []
-        self.connection = db_manager.connection
-        self.cursor = db_manager.cursor
+        self.connection = sqlite3.connect(db_manager.db_file, check_same_thread=False)
+        self.cursor = self.connection.cursor()
     
     def add_important_instruction(self, full_query: str):
         self.important_instructions.append(full_query)
@@ -34,9 +35,12 @@ class DbQueue(Thread):
             if len(self.important_instructions) > 0:
                 for instruction in self.important_instructions:
                     self.cursor.execute(instruction)
+                    self.important_instructions.remove(instruction) 
+                
                 self.connection.commit()
                 self.connection.serialize()
             
+            # then perform normal (insert) queries
             if len(self.instructions) > 0:
                 # count = 0
                 for instruction in self.instructions:

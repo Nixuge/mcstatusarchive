@@ -22,14 +22,15 @@ This is the case on Python 3.11 by default (at least for me), but not on 3.10
 
 See https://docs.python.org/3/library/sqlite3.html#sqlite3.threadsafety for more info
 ============================================================""")
-    
-        self.connection = self.create_connection(db_file)
+
+        self.db_file = db_file
+        self.connection = self.create_connection()
         self.cursor = self.connection.cursor()
 
-    def create_connection(self, db_file: str) -> Connection:
+    def create_connection(self) -> Connection:
         # try:
-        connection = sqlite3.connect(db_file, check_same_thread=False)
-        print(f"Successfully connected to sqlite (v{sqlite3.version}) for file \"{db_file}\"")
+        connection = sqlite3.connect(self.db_file, check_same_thread=False)
+        print(f"Successfully connected to sqlite (v{sqlite3.version}) for file \"{self.db_file}\"")
         return connection
         # except Error as e:
         #     print(e)
