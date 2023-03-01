@@ -2,11 +2,11 @@ import base64
 from time import time
 from mcstatus import JavaServer
 from mcstatus.pinger import PingResponse
-from database.Queries import JavaQueries
+from database.DbQueries import JavaQueries
 
 from servers.Server import ServerSv
 
-from database.Utils import ServerType, DbUtils
+from database.DbUtils import ServerType, DbUtils
 from vars.DbManagers import DBMANAGERS
 from vars.DbQueues import DBQUEUES
 Player = PingResponse.Players.Player
