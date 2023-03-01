@@ -12,7 +12,7 @@ class ServersLoader:
     def __init__(self, file_name: str) -> None:
         self.file_name = file_name
 
-    async def parse(self):
+    async def parse(self) -> list[JavaServerSv | BedrockServerSv]:
         all_servers_coroutines: list[Coroutine] = []
 
         with open(self.file_name, 'r') as file:
@@ -26,6 +26,6 @@ class ServersLoader:
             for table_name, server_ip in servers.items():
                 all_servers_coroutines.append(Clazz(table_name, server_ip))
 
-        all_servers: list = await asyncio.gather(*all_servers_coroutines)
+        all_servers = await asyncio.gather(*all_servers_coroutines)
 
         return all_servers

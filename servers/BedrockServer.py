@@ -1,3 +1,4 @@
+import asyncio
 from time import time
 from mcstatus import BedrockServer
 from mcstatus.bedrock_status import BedrockStatusResponse
@@ -28,19 +29,22 @@ class BedrockServerSv(ServerSv):
         self.values = DbUtils.get_previous_values_from_db(
             DBINSTANCES.bedrock_instance.cursor, table_name, ServerType.BEDROCK
         )
-        print("Done loading BEDROCK server " + ip)
 
     async def save_status(self):
         try:
-            status = await self.server.async_status()
+            async with asyncio.timeout(10):
+                status = await self.server.async_status()
+        except TimeoutError:
+            print(f"Failed to grab {self.ip} (TIMEOUT)")
+            return
         except Exception as e:
             print(f"Failed to grab {self.ip}! {e}")
             return # just continue another time if fail
 
         data = self.get_values_dict(status)
         data = self.update_values(data)  # only keep changed ones
-        data_list = DbUtils.get_args_in_order_from_dict(data, ServerType.JAVA)
-        DBQUEUES.db_queue_java.add_instuction(self.insert_query, data_list)
+        data_list = DbUtils.get_args_in_order_from_dict(data, ServerType.BEDROCK)
+        DBQUEUES.db_queue_bedrock.add_instuction(self.insert_query, data_list)
 
 
     def get_values_dict(self, status: BedrockStatusResponse) -> dict:

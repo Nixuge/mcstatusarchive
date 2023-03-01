@@ -6,17 +6,22 @@ from servers.ServersLoader import ServersLoader
 from vars.DbQueues import DBQUEUES
 
 
-
-
 async def main():
+    DBQUEUES.db_queue_java.start()
+    DBQUEUES.db_queue_bedrock.start()
+
     servers = await ServersLoader("z_servers/servers.json").parse()
-    print(len(servers))
-    # DBQUEUES.db_queue_java.start()
-    # # serv = JavaServerSv("pickle", "hypixel.net")
-    # for i in range(5):
-    #     await asyncio.sleep(1)
-    #     await serv.save_status()
-    print("done")
+    print(f"{len(servers)} servers loaded.")
+    
+    input("start?")
+    
+    tasks = []
+    for server in servers:
+        tasks.append(server.save_status())
+
+    await asyncio.gather(*tasks)
+    
+    print("done: " + str(len(tasks)))
 
 asyncio.run(main())
 

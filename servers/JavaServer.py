@@ -1,3 +1,4 @@
+import asyncio
 import base64
 from time import time
 from mcstatus import JavaServer
@@ -31,11 +32,14 @@ class JavaServerSv(ServerSv):
         self.values = DbUtils.get_previous_values_from_db(
             DBINSTANCES.java_instance.cursor, table_name, ServerType.JAVA
         )
-        print("Done loading JAVA server " + ip)
 
     async def save_status(self):
         try:
-            status = await self.server.async_status()
+            async with asyncio.timeout(10):
+                status = await self.server.async_status()
+        except TimeoutError:
+            print(f"Failed to grab {self.ip} (TIMEOUT)")
+            return
         except Exception as e:
             print(f"Failed to grab {self.ip}! {e}")
             return # just continue another time if fail
