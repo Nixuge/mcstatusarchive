@@ -6,7 +6,7 @@ from database.DbQueries import BedrockQueries
 from servers.Server import ServerSv
 
 from database.DbUtils import ServerType, DbUtils
-from vars.DbManagers import DBMANAGERS
+from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
 
 
@@ -26,7 +26,7 @@ class BedrockServerSv(ServerSv):
         )
         # load last values from db (if any)
         self.values = DbUtils.get_previous_values_from_db(
-            DBMANAGERS.bedrock_connection.cursor, table_name, ServerType.BEDROCK
+            DBINSTANCES.bedrock_instance.cursor, table_name, ServerType.BEDROCK
         )
 
     async def save_status(self):

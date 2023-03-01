@@ -7,7 +7,7 @@ from database.DbQueries import JavaQueries
 from servers.Server import ServerSv
 
 from database.DbUtils import ServerType, DbUtils
-from vars.DbManagers import DBMANAGERS
+from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
 Player = PingResponse.Players.Player
 
@@ -23,12 +23,13 @@ class JavaServerSv(ServerSv):
         self.server = JavaServer.lookup(ip, port)
         self.insert_query = JavaQueries.get_insert_query(table_name)
         # create db if not present
+        DBINSTANCES.java_instance.cursor.execute
         DBQUEUES.db_queue_java.add_instuction(
             JavaQueries.get_create_table_query(table_name), None
         )
         # load last values from db (if any)
         self.values = DbUtils.get_previous_values_from_db(
-            DBMANAGERS.java_connection.cursor, table_name, ServerType.JAVA
+            DBINSTANCES.java_instance.cursor, table_name, ServerType.JAVA
         )
 
     async def save_status(self):
