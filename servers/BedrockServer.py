@@ -40,7 +40,7 @@ class BedrockServerSv(ServerSv):
             return
         except Exception as e:
             print(f"Failed to grab {self.ip}! {e}")
-            return # just continue another time if fail
+            return
 
         data = self.get_values_dict(status)
         data = self.update_values(data)  # only keep changed ones

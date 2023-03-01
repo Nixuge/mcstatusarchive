@@ -37,12 +37,14 @@ class JavaServerSv(ServerSv):
         try:
             async with asyncio.timeout(Timings.server_timeout):
                 status = await self.server.async_status()
+        # TODO:
+        # figure out how to remove the nasty "socket.send() raised exception." prints
         except TimeoutError:
             print(f"Failed to grab {self.ip} (TIMEOUT)")
             return
         except Exception as e:
             print(f"Failed to grab {self.ip}! {e}")
-            return # just continue another time if fail
+            return
 
         data = self.get_values_dict(status)
         data = self.update_values(data)  # only keep changed ones
