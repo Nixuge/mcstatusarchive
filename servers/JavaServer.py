@@ -16,11 +16,11 @@ class JavaServerSv(ServerSv):
     server: JavaServer
     insert_query: str
 
-    def __init__(self, table_name: str, ip: str, port: int = 25565) -> None:
+    async def __init__(self, table_name: str, ip: str, port: int = 25565) -> None:
         # inheriting
-        super().__init__(table_name, ip, port)
+        await super().__init__(table_name, ip, port)
         # get non changing values
-        self.server = JavaServer.lookup(ip, port)
+        self.server = await JavaServer.async_lookup(ip, port)
         self.insert_query = JavaQueries.get_insert_query(table_name)
         # create db if not present
         DBINSTANCES.java_instance.cursor.execute
@@ -31,6 +31,7 @@ class JavaServerSv(ServerSv):
         self.values = DbUtils.get_previous_values_from_db(
             DBINSTANCES.java_instance.cursor, table_name, ServerType.JAVA
         )
+        print("Done loading JAVA server " + ip)
 
     async def save_status(self):
         try:

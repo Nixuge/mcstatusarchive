@@ -1,4 +1,6 @@
+import asyncio
 import json
+from typing import Coroutine
 from servers.BedrockServer import BedrockServerSv
 
 from servers.JavaServer import JavaServerSv
@@ -10,8 +12,8 @@ class ServersLoader:
     def __init__(self, file_name: str) -> None:
         self.file_name = file_name
 
-    def parse(self):
-        all_servers: list[JavaServerSv | BedrockServerSv] = []
+    async def parse(self):
+        all_servers_coroutines: list[Coroutine] = []
 
         with open(self.file_name, 'r') as file:
             data: dict = json.load(file)
@@ -20,8 +22,10 @@ class ServersLoader:
             servers: dict | None = data.get(key)
             if not servers:
                 continue
-
+            
             for table_name, server_ip in servers.items():
-                all_servers.append(Clazz(table_name, server_ip))
+                all_servers_coroutines.append(Clazz(table_name, server_ip))
+
+        all_servers: list = await asyncio.gather(*all_servers_coroutines)
 
         return all_servers

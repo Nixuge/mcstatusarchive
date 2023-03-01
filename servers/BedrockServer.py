@@ -14,11 +14,11 @@ class BedrockServerSv(ServerSv):
     server: BedrockServer
     insert_query: str
 
-    def __init__(self, table_name: str, ip: str, port: int = 19132) -> None:
+    async def __init__(self, table_name: str, ip: str, port: int = 19132) -> None:
         # inheriting
-        super().__init__(table_name, ip, port)
+        await super().__init__(table_name, ip, port)
         # get non changing values
-        self.server = BedrockServer.lookup(ip, port)
+        self.server = BedrockServer.lookup(ip, port) #bedrock doesn't need/have async lookup
         self.insert_query = BedrockQueries.get_insert_query(table_name)
         # create db if not present
         DBQUEUES.db_queue_bedrock.add_instuction(
@@ -28,6 +28,7 @@ class BedrockServerSv(ServerSv):
         self.values = DbUtils.get_previous_values_from_db(
             DBINSTANCES.bedrock_instance.cursor, table_name, ServerType.BEDROCK
         )
+        print("Done loading BEDROCK server " + ip)
 
     async def save_status(self):
         try:

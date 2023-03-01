@@ -1,26 +1,27 @@
 from abc import abstractmethod
 
-# class aobject(object):
-#     """Inheriting this class allows you to define an async __init__.
+# thanks to https://stackoverflow.com/a/45364670/10321409
+class AsyncInit(object):
+    """Inheriting this class allows you to define an async __init__.
 
-#     So you can create objects by doing something like `await MyClass(params)`
-#     """
-#     async def __new__(cls, *a, **kw):
-#         instance = super().__new__(cls)
-#         await instance.__init__(*a, **kw)
-#         return instance
+    So you can create objects by doing something like `await MyClass(params)`
+    """
+    async def __new__(cls, *a, **kw):
+        instance = super().__new__(cls)
+        await instance.__init__(*a, **kw) # type: ignore
+        return instance
 
-#     async def __init__(self):
-#         pass
+    async def __init__(self):
+        pass
 
 
-class ServerSv:
+class ServerSv(AsyncInit):
     ip: str
     port: int
 
     values: dict
 
-    def __init__(self, table_name: str, ip: str, port: int) -> None:
+    async def __init__(self, table_name: str, ip: str, port: int) -> None:
         self.ip = ip
         self.port = port
 
