@@ -6,7 +6,7 @@ from time import sleep
 class DbQueue(Thread):
     # should be thread safe as lists are thread safe
     #TODO: use queue (https://www.geeksforgeeks.org/queue-in-python/ ?)
-    instructions: list[tuple[str, list]] #0 = query, 1 = data
+    instructions: list[tuple[str, list | None]] #0 = query, 1 = data
     connection: Connection
     cursor: Cursor
 
@@ -15,8 +15,8 @@ class DbQueue(Thread):
         self.instructions = []
         self.connection = connection
         self.cursor = connection.cursor()
-
-    def add_instuction(self, query: str, data: list):
+    
+    def add_instuction(self, query: str, data: list | None):
         self.instructions.append((query, data))
 
     def run(self) -> None:
@@ -26,7 +26,11 @@ class DbQueue(Thread):
                 # count = 0
                 for instruction in self.instructions:
                     # count += 1
-                    self.cursor.execute(instruction[0], instruction[1])
+                    if instruction[1] != None: # if data present
+                        self.cursor.execute(instruction[0], instruction[1])
+                    else:
+                        self.cursor.execute(instruction[0])
+                    
                     self.instructions.remove(instruction) 
                 # print(f"Added {count} values")
 

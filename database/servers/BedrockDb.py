@@ -1,5 +1,5 @@
 from VARS_DBQUEUES import DBQUEUES
-import database.queries.Bedrock as Queries
+import database.Queries as Queries
 from status.BedrockStatus import BedrockStatus
 from database.servers.Base import BaseDb
 
