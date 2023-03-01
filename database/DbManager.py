@@ -1,14 +1,12 @@
 import sqlite3
-from sqlite3 import Connection, Error
-from database.servers.BedrockDb import BedrockDb
+from sqlite3 import Connection, Cursor, Error
 
-from database.servers.JavaDb import JavaDb
 
-class DbManager:
+class DbInstance:
     connection: Connection
-    server_db_type: str
+    cursor: Cursor
 
-    def __init__(self, connection: Connection, server_db_type="java"):
+    def __init__(self, db_file: str):
         # see https://docs.python.org/3/library/sqlite3.html#sqlite3.threadsafety
         # & eventually https://ricardoanderegg.com/posts/python-sqlite-thread-safety/
         if sqlite3.threadsafety != 3:
@@ -25,18 +23,14 @@ This is the case on Python 3.11 by default (at least for me), but not on 3.10
 See https://docs.python.org/3/library/sqlite3.html#sqlite3.threadsafety for more info
 ============================================================""")
     
-        self.server_db_type = server_db_type
-        self.connection = connection
+        self.connection = self.create_connection(db_file)
+        self.cursor = self.connection.cursor()
 
-    # def create_connection(self, db_file: str) -> Connection:
-    #     try:
-    #         # self.connection = sqlite3.connect(db_file, check_same_thread=False)
-    #         print(f"Successfully connected to sqlite (v{sqlite3.version}) for {self.server_db_type}")
-    #     except Error as e:
-    #         print(e)
-
-    def get_server_db(self, server_name: str) -> JavaDb | BedrockDb:
-        if self.server_db_type == "java":
-            return JavaDb(server_name, self.connection)
-        else:
-            return BedrockDb(server_name, self.connection)
+    def create_connection(self, db_file: str) -> Connection:
+        # try:
+        connection = sqlite3.connect(db_file, check_same_thread=False)
+        print(f"Successfully connected to sqlite (v{sqlite3.version}) for file \"{db_file}\"")
+        return connection
+        # except Error as e:
+        #     print(e)
+        #     raise Error(e)

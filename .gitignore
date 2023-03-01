@@ -1,4 +1,4 @@
 *.pyc
-z_bedrock_servers.db
-z_java_servers.db
+*.db
+*.db-journal
 info.txt
