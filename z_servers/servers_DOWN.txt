@@ -1,6 +1,7 @@
 JAVA:
 "CristalyNetwork": "play.cristalycraft.us",
 "mc_qplay_cz": "mc.qplay.cz",
+"sub_shield_land": "sub.shield.land",
 
 BEDROCK:
 "Galaxite": "play.galaxite.net",
