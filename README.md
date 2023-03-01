@@ -30,7 +30,7 @@
 # Requirements
 - mcstatus (pip install mcstatus)
 - Python with a version of sqlite that supports serialized mode
-  - (See [DbManager.py](database/DbManager.py#16) or just launch the program for more info)
+  - (See [DbManager.py](database/DbManager.py#13) or just launch the program for more info)
 
 # Info
 The DB saves `save_time` as unix time **from your timezone**  

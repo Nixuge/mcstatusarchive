@@ -4,7 +4,7 @@ from mcstatus import JavaServer
 from mcstatus.pinger import PingResponse
 from database.Queries import JavaQueries
 
-from temp.Server import ServerSv
+from servers.Server import ServerSv
 
 from database.Utils import ServerType, DbUtils
 from vars.DbManagers import DBMANAGERS

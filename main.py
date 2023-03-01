@@ -1,5 +1,5 @@
 import asyncio
-from temp.JavaServer import JavaServerSv
+from servers.JavaServer import JavaServerSv
 from vars.DbQueues import DBQUEUES
 
 
