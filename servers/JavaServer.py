@@ -10,6 +10,7 @@ from servers.Server import ServerSv
 from database.DbUtils import ServerType, DbUtils
 from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
+from vars.Timings import Timings
 Player = PingResponse.Players.Player
 
 
@@ -24,9 +25,8 @@ class JavaServerSv(ServerSv):
         self.server = await JavaServer.async_lookup(ip, port)
         self.insert_query = JavaQueries.get_insert_query(table_name)
         # create db if not present
-        DBINSTANCES.java_instance.cursor.execute
-        DBQUEUES.db_queue_java.add_instuction(
-            JavaQueries.get_create_table_query(table_name), None
+        DBQUEUES.db_queue_java.add_important_instruction(
+            JavaQueries.get_create_table_query(table_name)
         )
         # load last values from db (if any)
         self.values = DbUtils.get_previous_values_from_db(
@@ -35,7 +35,7 @@ class JavaServerSv(ServerSv):
 
     async def save_status(self):
         try:
-            async with asyncio.timeout(10):
+            async with asyncio.timeout(Timings.server_timeout):
                 status = await self.server.async_status()
         except TimeoutError:
             print(f"Failed to grab {self.ip} (TIMEOUT)")

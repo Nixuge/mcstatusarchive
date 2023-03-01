@@ -9,6 +9,7 @@ from servers.Server import ServerSv
 from database.DbUtils import ServerType, DbUtils
 from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
+from vars.Timings import Timings
 
 
 class BedrockServerSv(ServerSv):
@@ -22,8 +23,8 @@ class BedrockServerSv(ServerSv):
         self.server = BedrockServer.lookup(ip, port) #bedrock doesn't need/have async lookup
         self.insert_query = BedrockQueries.get_insert_query(table_name)
         # create db if not present
-        DBQUEUES.db_queue_bedrock.add_instuction(
-            BedrockQueries.get_create_table_query(table_name), None
+        DBQUEUES.db_queue_bedrock.add_important_instruction(
+            BedrockQueries.get_create_table_query(table_name)
         )
         # load last values from db (if any)
         self.values = DbUtils.get_previous_values_from_db(
@@ -32,7 +33,7 @@ class BedrockServerSv(ServerSv):
 
     async def save_status(self):
         try:
-            async with asyncio.timeout(10):
+            async with asyncio.timeout(Timings.server_timeout):
                 status = await self.server.async_status()
         except TimeoutError:
             print(f"Failed to grab {self.ip} (TIMEOUT)")
