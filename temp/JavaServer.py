@@ -2,12 +2,13 @@ import base64
 from time import time
 from mcstatus import JavaServer
 from mcstatus.pinger import PingResponse
-from VARS_DBQUEUES import DBQUEUES
 from database.Queries import JavaQueries
 
 from temp.Server import ServerSv
 
-from database.utils.Java import JavaUtils
+from database.Utils import ServerType, DbUtils
+from vars.DbManagers import DBMANAGERS
+from vars.DbQueues import DBQUEUES
 Player = PingResponse.Players.Player
 
 
@@ -15,23 +16,32 @@ class JavaServerSv(ServerSv):
     server: JavaServer
     insert_query: str
 
-    async def __init__(self, table_name: str, ip: str, port: int = 25565) -> None:
+    def __init__(self, table_name: str, ip: str, port: int = 25565) -> None:
         # inheriting
         super().__init__(table_name, ip, port)
         # get non changing values
-        self.server = await JavaServer.async_lookup(ip, port)
+        self.server = JavaServer.lookup(ip, port)
         self.insert_query = JavaQueries.get_insert_query(table_name)
         # create db if not present
         DBQUEUES.db_queue_java.add_instuction(
             JavaQueries.get_create_table_query(table_name), None
         )
+        # load last values from db (if any)
+        self.values = DbUtils.get_previous_values_from_db(
+            DBMANAGERS.java_connection.cursor, table_name, ServerType.JAVA
+        )
 
     async def save_status(self):
-        status = await self.server.async_status()
+        try:
+            status = await self.server.async_status()
+        except Exception as e:
+            print(f"Failed to grab {self.ip}! {e}")
+            return # just continue another time if fail
+
         data = self.get_values_dict(status)
         data = self.update_values(data)  # only keep changed ones
-        data_list = JavaUtils.get_args_in_order_from_dict(data)
-        DBQUEUES.db_queue_bedrock.add_instuction(self.insert_query, data_list)
+        data_list = DbUtils.get_args_in_order_from_dict(data, ServerType.JAVA)
+        DBQUEUES.db_queue_java.add_instuction(self.insert_query, data_list)
 
     def get_values_dict(self, status: PingResponse) -> dict:
         return {
@@ -68,3 +78,4 @@ class JavaServerSv(ServerSv):
             })
 
         return str(players)
+

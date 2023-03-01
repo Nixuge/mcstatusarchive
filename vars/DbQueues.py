@@ -1,4 +1,4 @@
-from VARS_CONNECTION import CONNECTIONS
+from vars.DbManagers import DBMANAGERS
 from database.DbQueue import DbQueue
 
 # IMPORTANT NOTE:
@@ -6,5 +6,5 @@ from database.DbQueue import DbQueue
 # FOR NOW, WILL GET TO MAKING THINGS PROPERLY NEXT WEEK
 
 class DBQUEUES:
-    db_queue_java = DbQueue(CONNECTIONS.java_connection)
-    db_queue_bedrock = DbQueue(CONNECTIONS.bedrock_connection)
+    db_queue_java = DbQueue(DBMANAGERS.java_connection)
+    db_queue_bedrock = DbQueue(DBMANAGERS.bedrock_connection)

@@ -2,6 +2,8 @@ from sqlite3 import Connection, Cursor
 from threading import Thread
 from time import sleep
 
+from database.DbManager import DbInstance
+
 
 class DbQueue(Thread):
     # should be thread safe as lists are thread safe
@@ -10,11 +12,11 @@ class DbQueue(Thread):
     connection: Connection
     cursor: Cursor
 
-    def __init__(self, connection: Connection) -> None:
+    def __init__(self, db_manager: DbInstance) -> None:
         super().__init__(None, None, "DbQueueThread") #see thread init (unneeded basically)
         self.instructions = []
-        self.connection = connection
-        self.cursor = connection.cursor()
+        self.connection = db_manager.connection
+        self.cursor = db_manager.cursor
     
     def add_instuction(self, query: str, data: list | None):
         self.instructions.append((query, data))

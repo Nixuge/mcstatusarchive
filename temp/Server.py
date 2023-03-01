@@ -7,7 +7,6 @@ class ServerSv:
     def __init__(self, table_name: str, ip: str, port: int) -> None:
         self.ip = ip
         self.port = port
-        self.values = {}
     
     def update_values(self, new_values: dict) -> dict:
         # not checking if new_values has all needed values in it
