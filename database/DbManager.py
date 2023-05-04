@@ -24,10 +24,10 @@ See https://docs.python.org/3/library/sqlite3.html#sqlite3.threadsafety for more
 ============================================================""")
 
         self.db_file = db_file
-        self.connection = self.create_connection()
+        self.connection = self._create_connection()
         self.cursor = self.connection.cursor()
 
-    def create_connection(self) -> Connection:
+    def _create_connection(self) -> Connection:
         # try:
         connection = sqlite3.connect(self.db_file, check_same_thread=False)
         print(f"Successfully connected to sqlite (v{sqlite3.version}) for file \"{self.db_file}\"")

@@ -27,32 +27,39 @@ class DbQueue(Thread):
     def add_instuction(self, query: str, data: list | None):
         self.instructions.append((query, data))
 
+    def _process_important_instructions(self) -> None:
+        for instruction in self.important_instructions:
+            self.cursor.execute(instruction)
+            self.important_instructions.remove(instruction) 
+                
+        self.connection.commit()
+        self.connection.serialize()
+
+    def _process_normal_instruction(self) -> None:
+        # count = 0
+        for instruction in self.instructions:
+            # count += 1
+            if instruction[1] != None: # if data present
+                self.cursor.execute(instruction[0], instruction[1])
+            else:
+                self.cursor.execute(instruction[0])
+                    
+            self.instructions.remove(instruction) 
+        # print(f"Added {count} values")
+
+        self.connection.commit()
+        self.connection.serialize()
+
+
     def run(self) -> None:
         while True:
             sleep(0.5)
 
             # perform create table queries BEFORE insert queries
             if len(self.important_instructions) > 0:
-                for instruction in self.important_instructions:
-                    self.cursor.execute(instruction)
-                    self.important_instructions.remove(instruction) 
-                
-                self.connection.commit()
-                self.connection.serialize()
+                self._process_important_instructions()
+                sleep(2)
             
             # then perform normal (insert) queries
             if len(self.instructions) > 0:
-                # count = 0
-                for instruction in self.instructions:
-                    # count += 1
-                    if instruction[1] != None: # if data present
-                        self.cursor.execute(instruction[0], instruction[1])
-                    else:
-                        self.cursor.execute(instruction[0])
-                    
-                    self.instructions.remove(instruction) 
-                # print(f"Added {count} values")
-
-                self.connection.commit()
-                self.connection.serialize()
-
+                self._process_normal_instruction()
