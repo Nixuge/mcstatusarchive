@@ -1,4 +1,4 @@
-from database.DbManager import DbInstance
+from database.DbInstance import DbInstance
 
 
 class DBINSTANCES:

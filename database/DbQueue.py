@@ -3,7 +3,7 @@ import sqlite3
 from threading import Thread
 from time import sleep
 
-from database.DbManager import DbInstance
+from database.DbInstance import DbInstance
 
 
 class DbQueue(Thread):

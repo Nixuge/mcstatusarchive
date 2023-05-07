@@ -1,0 +1,16 @@
+[Unit]
+Description=McStatusArchive
+After=network.target
+
+[Service]
+SyslogIdentifier=mcstatusarchive
+Restart=always
+RestartSec=5
+Type=simple
+User=nix
+WorkingDirectory=/home/nix/webserver/McStatusArchive
+ExecStart=/home/nix/webserver/mcstatusarchive/main.py
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
