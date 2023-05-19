@@ -63,7 +63,7 @@ async def main():
     DBQUEUES.db_queue_java.start()
     DBQUEUES.db_queue_bedrock.start()
 
-    servers = await ServersLoader("z_servers/servers.json").parse()
+    servers = await ServersLoader("servers.json").parse()
     print(f"{len(servers)} servers loaded.")
 
     await save_every_x_secs(servers)

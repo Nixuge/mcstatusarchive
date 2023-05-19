@@ -152,7 +152,8 @@
 
         "eu_stray_gg": "eu.stray.gg",
         "skyblock_net": "skyblock.net",
-        "play_pandakmc_fr": "play.pandakmc.fr"
+        "play_pandakmc_fr": "play.pandakmc.fr",
+        "galaxy_fr_to": "galaxy.fr.to"
         
     },
     "bugrock": {
@@ -169,7 +170,5 @@
         
         "HyperLands": "play.hyperlandsmc.net",
         "GommeHD": "gommehd.net"
-        
-
     }
 }
