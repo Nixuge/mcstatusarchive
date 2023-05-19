@@ -25,8 +25,6 @@ class ServersLoader:
             
             for table_name, server_ip in servers.items():
                 all_servers_coroutines.append(Clazz(table_name, server_ip))
-                if "galaxy" in table_name:
-                    print(table_name)
         all_servers = await asyncio.gather(*all_servers_coroutines)
 
         return all_servers
