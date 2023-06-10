@@ -32,7 +32,7 @@ async def run_batch_raw(servers: list[JavaServerSv | BedrockServerSv]):
     print("== Done with batch ==")
 
 
-async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], task_limit: int = 20):
+async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], task_limit: int = 15):
     print("== Starting batch ==")
 
     running_tasks: list[Task] = []
