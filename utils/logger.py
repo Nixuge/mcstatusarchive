@@ -7,11 +7,10 @@ def get_proper_logger(logger: logging.Logger, debugConsole: bool):
     logger.setLevel(logging.DEBUG)
     logger.propagate = False #avoid having multiple outputs
 
-    # Filter out socket.send() exceptions
-    logger.addFilter(FilterSocketExceptions())
 
     # Console output
     sh = logging.StreamHandler()
+    sh.addFilter(FilterSocketExceptions())
     if debugConsole:
         sh.setLevel(logging.DEBUG)
     else:
@@ -26,6 +25,7 @@ def get_proper_logger(logger: logging.Logger, debugConsole: bool):
     dt_string = now.strftime("%d-%m-%Y_%H.%M.%S")
 
     fh = logging.FileHandler(f"logs/{dt_string}.log")
+    fh.addFilter(FilterSocketExceptions())
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(CustomFormatterFile())
     logger.addHandler(fh)
