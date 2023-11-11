@@ -36,7 +36,7 @@ class JavaServerSv(ServerSv):
         )
 
     async def save_status(self):
-        # print(f"Starting to grab {self.ip}.")
+        # logging.debug(f"Starting to grab {self.ip}.")
         try:
             async with asyncio.timeout(Timings.server_timeout):
                 status = await self.server.async_status()
@@ -60,7 +60,7 @@ class JavaServerSv(ServerSv):
         data = self.update_values(data)  # only keep changed ones
         data_list = DbUtils.get_args_in_order_from_dict(data, ServerType.JAVA)
         DBQUEUES.db_queue_java.add_instuction(self.insert_query, data_list)
-        # print(f"Done grabbing {self.ip} !")
+        logging.getLogger("root").debug(f"Done grabbing {self.ip} !")
 
     def get_values_dict(self, status: PingResponse) -> dict:
         return {

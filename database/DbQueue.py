@@ -48,7 +48,7 @@ class DbQueue(Thread):
             else:
                 self.cursor.execute(instruction[0])
                     
-        # print(f"Added {count} values")
+        # logging.debug(f"Added {count} values")
 
         self.connection.commit()
         # self.connection.serialize()

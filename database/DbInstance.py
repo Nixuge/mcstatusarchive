@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 from sqlite3 import Connection, Cursor, Error
 
@@ -30,7 +31,7 @@ See https://docs.python.org/3/library/sqlite3.html#sqlite3.threadsafety for more
     def _create_connection(self) -> Connection:
         # try:
         connection = sqlite3.connect(self.db_file, check_same_thread=False)
-        print(f"Successfully connected to sqlite (v{sqlite3.version}) for file \"{self.db_file}\"")
+        logging.getLogger().info(f"Successfully connected to sqlite (v{sqlite3.version}) for file \"{self.db_file}\"")
         return connection
         # except Error as e:
         #     print(e)

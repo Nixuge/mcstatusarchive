@@ -1,17 +1,20 @@
 #!/bin/python3.11
 
+# Needs to be on top of everything for it to propagate to imports
+import logging
+from utils.logger import get_proper_logger
+DEBUG_LOG = False
+logger = get_proper_logger(logging.getLogger("root"), DEBUG_LOG)
+
 import asyncio
 from asyncio import Task
-import logging
 from time import time
 from typing import Coroutine
-from utils.logger import get_proper_logger
 from servers.BedrockServer import BedrockServerSv
 from servers.JavaServer import JavaServerSv
 from servers.ServersLoader import ServersLoader
-from vars.DbQueues import DBQUEUES
 from vars.Timings import Timings
-
+from vars.DbQueues import DBQUEUES
 
 async def save_every_x_secs(servers: list):
     every = Timings.save_every
@@ -19,23 +22,23 @@ async def save_every_x_secs(servers: list):
         start_time = int(time())
         await run_batch_limit(servers)
 
-        print("[Waiting for timer to finish...]")
+        logging.info("[Waiting for timer to finish...]")
         while start_time + every > int(time()):
             await asyncio.sleep(.01)
 
 
 async def run_batch_raw(servers: list[JavaServerSv | BedrockServerSv]):
-    print("== Starting batch ==")
+    logging.info("== Starting batch ==")
     tasks: list[Coroutine] = []
     for server in servers:
         tasks.append(server.save_status())
 
     await asyncio.gather(*tasks)
-    print("== Done with batch ==")
+    logging.info("== Done with batch ==")
 
 
 async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], task_limit: int = 10):
-    print("== Starting batch ==")
+    logging.info("== Starting batch ==")
 
     running_tasks: list[Task] = []
 
@@ -56,14 +59,15 @@ async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], task_li
             break
 
         await asyncio.sleep(.2)
-        # print(f"Remaining tasks: {len(running_tasks)}, Remaining servers: {len(to_add)}")
+        # logging.info(f"Remaining tasks: {len(running_tasks)}, Remaining servers: {len(to_add)}")
 
-    print("== Done with batch ==")
+    logging.info("== Done with batch ==")
 
 
 async def main():
-    DEBUG_LOG = True
-    get_proper_logger(logging.getLogger(), DEBUG_LOG)
+
+    # print(logger.name)
+    await asyncio.sleep(1)
 
     DBQUEUES.db_queue_java.start()
     DBQUEUES.db_queue_bedrock.start()
