@@ -67,7 +67,11 @@ class CustomFormatterConsole(logging.Formatter):
         #     return "\r"
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
-        return formatter.format(record).replace(".py", "")
+        result = formatter.format(record).replace(".py", "")
+        # A bit dirty but makes logs look WAY better
+        if "ERRORSPLIT" in result:
+            return COLORS.yellow + "- " + result.split("ERRORSPLIT")[1]
+        return result
 
 class CustomFormatterFile(logging.Formatter):
     format_ = "%(asctime)s [%(levelname)s] %(filename)s:%(lineno)s %(message)s"

@@ -44,7 +44,7 @@ class JavaServerSv(ServerSv):
         # figure out how to remove the nasty "socket.send() raised exception." prints
         # Should be done in logger
         except TimeoutError:
-            logging.warn(ERRORS.get("Timeout"))
+            logging.warn(f"ERRORSPLIT{self.ip}: {ERRORS.get('Timeout')}")
             return
         except Exception as e:
             e = str(e)
@@ -53,7 +53,7 @@ class JavaServerSv(ServerSv):
             else:
                 formated_error = ERRORS.get(e, 'Unknown error happened ' + e)
 
-            logging.warn(f"{self.ip}: {formated_error}")
+            logging.warn(f"ERRORSPLIT{self.ip}: {formated_error}")
             return
 
         data = self.get_values_dict(status)

@@ -38,7 +38,7 @@ class BedrockServerSv(ServerSv):
             async with asyncio.timeout(Timings.server_timeout):
                 status = await self.server.async_status()
         except TimeoutError:
-            logging.warn(ERRORS.get("Timeout"))
+            logging.warn(f"ERRORSPLIT{self.ip}: {ERRORS.get('Timeout')}")
             return
         except Exception as e:
             e = str(e)
@@ -47,7 +47,7 @@ class BedrockServerSv(ServerSv):
             else:
                 formated_error = ERRORS.get(e, 'Unknown error happened ' + e)
 
-            logging.warn(f"{self.ip}: {formated_error}")
+            logging.warn(f"ERRORSPLIT{self.ip}: {formated_error}")
             return
 
         data = self.get_values_dict(status)
