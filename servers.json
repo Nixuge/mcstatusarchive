@@ -1,4 +1,7 @@
 {
+    "PERMANENTLY_DOWN": {
+        "Onecube": "oneCube.com"
+    },
     "java": {
         "Hypixel": "hypixel.net",
         "Nixuge": "play.nixuge.me",
@@ -11,7 +14,7 @@
         "BedwarsPractice": "bedwarspractice.club",
 
         "Minemen": "eu.minemen.club",
-        "Onecube": "oneCube.com",
+        
         "PvPGym": "eu.pvpgym.net",
         "GommeHD": "gommehd.net",
 
@@ -153,7 +156,28 @@
         "eu_stray_gg": "eu.stray.gg",
         "skyblock_net": "skyblock.net",
         "play_pandakmc_fr": "play.pandakmc.fr",
-        "galaxy_fr_to": "galaxy.fr.to"
+        "galaxy_fr_to": "galaxy.fr.to",
+
+        "play_snapcraft_net": "play.snapcraft.net",
+        "play_firstsky_fr": "play.firstsky.fr",
+        "mineland_net": "mineland.net",
+        "ctlserv_fr": "ctlserv.fr",
+
+        "mc_dash_lzvu0qwvgb_funcraft_net": "mc-lzvu0qwvgb.funcraft.net",
+        "cytooxien_de": "cytooxien.de",
+        "unicacity_de": "unicacity.de",
+        "linkcraft": "linkcraft.mcpro.io",
+
+        "minefurs_net": "minefurs.net",
+        "germanrp_eu": "germanrp.eu",
+        "mc_eternyuhc_fr": "mc.eternyuhc.fr",
+        "play_ornate_fr": "play.ornate.fr",
+
+        "majin_fr": "majin.fr",
+        "play_skyly_fr": "play.skyly.fr"
+
+        
+
         
     },
     "bugrock": {
