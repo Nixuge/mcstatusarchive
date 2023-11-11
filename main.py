@@ -60,7 +60,7 @@ async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], task_li
     print("== Done with batch ==")
 
 
-logging.info("TEST DEBUG MESSAGE")
+logging.warning("TEST DEBUG MESSAGE")
 
 async def main():
     DBQUEUES.db_queue_java.start()
