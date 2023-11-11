@@ -53,7 +53,7 @@ def _get_correctly(prefix: str) -> str:
 
 class FilterSocketExceptions(logging.Filter):
     def filter(self, record):
-        isGood = not record.getMessage() == "socket.send() raised exception."
+        isGood = not "socket.send() raised exception." in record.getMessage() 
         if not isGood:
             print("FILTERED WRONG MESSAGE !")
         return isGood
