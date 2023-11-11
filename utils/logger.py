@@ -4,33 +4,31 @@ from datetime import datetime
 import os
 
 def get_proper_logger(logger: logging.Logger, debugConsole: bool):
-    # # Avoid pointless socket exception from other loggers
-    # # does not work.
-    # config.dictConfig({
-    #     'version': 1,
-    #     'disable_existing_loggers': True,
-    # })
-
     logger.setLevel(logging.DEBUG)
     logger.propagate = False #avoid having multiple outputs
 
-    ch = logging.StreamHandler()
-    if debugConsole:
-        ch.setLevel(logging.DEBUG)
-    else:
-        ch.setLevel(logging.INFO)
-    ch.setFormatter(CustomFormatterConsole())
-    logger.addHandler(ch)
+    # Filter out socket.send() exceptions
+    logger.addFilter(FilterSocketExceptions())
 
+    # Console output
+    sh = logging.StreamHandler()
+    if debugConsole:
+        sh.setLevel(logging.DEBUG)
+    else:
+        sh.setLevel(logging.INFO)
+    sh.setFormatter(CustomFormatterConsole())
+    logger.addHandler(sh)
+
+    # File output
     if not os.path.exists("logs/"): os.mkdir("logs/")
 
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y_%H.%M.%S")
 
-    ch = logging.FileHandler(f"logs/{dt_string}.log")
-    ch.setLevel(logging.DEBUG)
-    ch.setFormatter(CustomFormatterFile())
-    logger.addHandler(ch)
+    fh = logging.FileHandler(f"logs/{dt_string}.log")
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(CustomFormatterFile())
+    logger.addHandler(fh)
 
     return logger
 
@@ -47,11 +45,18 @@ class COLORS:
     reset = "\033[0m"
 
 #using format instead of strings bc otherwise vscode removes color for everything else
-format1 = "%(asctime)s [%(levelname)s] {}%(filename)s:%(lineno)s{} ".format(COLORS.underline, COLORS.reset)
+format1 = "[%(levelname)s] {}%(filename)s:%(lineno)s{} ".format(COLORS.underline, COLORS.reset)
 format2 = "%(message)s"
 
 def _get_correctly(prefix: str) -> str:
     return prefix + format1 + prefix + format2 + COLORS.reset
+
+class FilterSocketExceptions(logging.Filter):
+    def filter(self, record):
+        isGood = not record.getMessage() == "socket.send() raised exception."
+        if not isGood:
+            print("FILTERED WRONG MESSAGE !")
+        return isGood
 
 class CustomFormatterConsole(logging.Formatter):
     FORMATS = {
@@ -63,15 +68,14 @@ class CustomFormatterConsole(logging.Formatter):
     }
 
     def format(self, record):
-        # Check top of get_proper_logger for why this is commented
-        if record.levelno == logging.WARNING and record.getMessage() == "socket.send() raised exception.":
-            return "\r"
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         result = formatter.format(record).replace(".py", "")
+
         # A bit dirty but makes logs look WAY better
         if "ERRORSPLIT" in result:
             return COLORS.yellow + "- " + result.split("ERRORSPLIT")[1]
+        
         return result
 
 class CustomFormatterFile(logging.Formatter):
