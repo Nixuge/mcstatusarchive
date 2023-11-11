@@ -36,7 +36,7 @@ class DbQueue(Thread):
             self.cursor.execute(self.important_instructions.pop(0))
             
         self.connection.commit()
-        self.connection.serialize()
+        # self.connection.serialize()
 
     def _process_normal_instruction(self) -> None:
         # count = 0
@@ -51,7 +51,7 @@ class DbQueue(Thread):
         # print(f"Added {count} values")
 
         self.connection.commit()
-        self.connection.serialize()
+        # self.connection.serialize()
 
 
     def run(self) -> None:

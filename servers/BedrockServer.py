@@ -57,7 +57,7 @@ class BedrockServerSv(ServerSv):
             "version_protocol": status.version.protocol, 
             "version_name": status.version.version, 
             "version_brand": status.version.brand, 
-            "motd": status.motd, 
+            "motd": status.motd.raw, 
             "gamemode": status.gamemode, 
             "map": status.map
         }
