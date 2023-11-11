@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import logging
 from time import time
 from mcstatus import JavaServer
 from mcstatus.pinger import PingResponse
@@ -11,6 +12,7 @@ from servers.Server import ServerSv
 from database.DbUtils import ServerType, DbUtils
 from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
+from vars.Errors import ERRORS
 from vars.Timings import Timings
 
 class JavaServerSv(ServerSv):
@@ -40,11 +42,18 @@ class JavaServerSv(ServerSv):
                 status = await self.server.async_status()
         # TODO:
         # figure out how to remove the nasty "socket.send() raised exception." prints
+        # Should be done in logger
         except TimeoutError:
-            print(f"Failed to grab {self.ip} (TIMEOUT)")
+            logging.warn(ERRORS.get("Timeout"))
             return
         except Exception as e:
-            print(f"Failed to grab {self.ip}! {e}")
+            e = str(e)
+            if "[Errno 111]" in e:
+                formated_error = ERRORS.get("ConnectCallFailed")
+            else:
+                formated_error = ERRORS.get(e, 'Unknown error happened ' + e)
+
+            logging.warn(f"{self.ip}: {formated_error}")
             return
 
         data = self.get_values_dict(status)
