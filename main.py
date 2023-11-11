@@ -5,6 +5,7 @@ from asyncio import Task
 import logging
 from time import time
 from typing import Coroutine
+from utils.logger import get_proper_logger
 from servers.BedrockServer import BedrockServerSv
 from servers.JavaServer import JavaServerSv
 from servers.ServersLoader import ServersLoader
@@ -59,18 +60,16 @@ async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], task_li
 
     print("== Done with batch ==")
 
-logging.debug("TEST DEBUG MESSAGE")
-logging.info("TEST INFO MESSAGE")
-logging.warning("TEST WARNING MESSAGE")
-logging.error("TEST ERROR MESSAGE")
-
 
 async def main():
+    DEBUG_LOG = True
+    get_proper_logger(logging.getLogger(), DEBUG_LOG)
+
     DBQUEUES.db_queue_java.start()
     DBQUEUES.db_queue_bedrock.start()
 
     servers = await ServersLoader("servers.json").parse()
-    print(f"{len(servers)} servers loaded.")
+    logging.info(f"{len(servers)} servers loaded.")
 
     await save_every_x_secs(servers)
 
