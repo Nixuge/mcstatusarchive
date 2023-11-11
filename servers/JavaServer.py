@@ -3,6 +3,7 @@ import base64
 from time import time
 from mcstatus import JavaServer
 from mcstatus.pinger import PingResponse
+from mcstatus.status_response import JavaStatusPlayer
 from database.DbQueries import JavaQueries
 
 from servers.Server import ServerSv
@@ -11,8 +12,6 @@ from database.DbUtils import ServerType, DbUtils
 from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
 from vars.Timings import Timings
-Player = PingResponse.Players.Player
-
 
 class JavaServerSv(ServerSv):
     server: JavaServer
@@ -75,7 +74,7 @@ class JavaServerSv(ServerSv):
         return "None"
 
     @staticmethod
-    def _get_player_sample(sample: list[Player] | None) -> str:
+    def _get_player_sample(sample: list[JavaStatusPlayer] | None) -> str:
         if sample == None:
             return "None"
         if len(sample) == 0:
