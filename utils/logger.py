@@ -4,11 +4,12 @@ from datetime import datetime
 import os
 
 def get_proper_logger(logger: logging.Logger, debugConsole: bool):
-    # Avoid pointless socket exception from other loggers
-    config.dictConfig({
-        'version': 1,
-        'disable_existing_loggers': True,
-    })
+    # # Avoid pointless socket exception from other loggers
+    # # does not work.
+    # config.dictConfig({
+    #     'version': 1,
+    #     'disable_existing_loggers': True,
+    # })
 
     logger.setLevel(logging.DEBUG)
     logger.propagate = False #avoid having multiple outputs
@@ -63,8 +64,8 @@ class CustomFormatterConsole(logging.Formatter):
 
     def format(self, record):
         # Check top of get_proper_logger for why this is commented
-        # if record.levelno == logging.WARNING and record.getMessage() == "socket.send() raised exception.":
-        #     return "\r"
+        if record.levelno == logging.WARNING and record.getMessage() == "socket.send() raised exception.":
+            return "\r"
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         result = formatter.format(record).replace(".py", "")
