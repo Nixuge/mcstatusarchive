@@ -2,6 +2,7 @@
 
 import asyncio
 from asyncio import Task
+import logging
 from time import time
 from typing import Coroutine
 from servers.BedrockServer import BedrockServerSv
@@ -58,6 +59,8 @@ async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], task_li
 
     print("== Done with batch ==")
 
+
+logging.info("TEST DEBUG MESSAGE")
 
 async def main():
     DBQUEUES.db_queue_java.start()
