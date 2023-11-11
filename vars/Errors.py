@@ -3,6 +3,7 @@ ERRORS = {
     "[Errno -2] Name or service not known": "Name unknown",
     "Socket did not respond with any information!": "Socket empty",
     "[Errno 104] Connection reset by peer": "Connection reset",
+    "[Errno 32] Broken pipe": "Broken pipe",
     "Timeout": "Timeout error",
     "ConnectCallFailed": "Connect call failed"
 }
