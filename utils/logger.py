@@ -53,6 +53,7 @@ def _get_correctly(prefix: str) -> str:
 
 class FilterSocketExceptions(logging.Filter):
     def filter(self, record):
+        # This shouldn't match any other error message (I hope)
         return not "raised exception." in record.getMessage()
 
 class CustomFormatterConsole(logging.Formatter):

@@ -1,9 +1,12 @@
+import logging
 from sqlite3 import Connection, Cursor
 import sqlite3
 from threading import Thread
 from time import sleep
+import traceback
 
 from database.DbInstance import DbInstance
+from vars.Errors import ERROR_FILE_PATH
 
 
 class DbQueue(Thread):
@@ -32,26 +35,41 @@ class DbQueue(Thread):
     # (for some reason? See the git blame for how it was done before)
     # So switched over to "while"s
     def _process_important_instructions(self) -> None:
-        while len(self.important_instructions) > 0:
-            self.cursor.execute(self.important_instructions.pop(0))
-            
-        self.connection.commit()
-        # self.connection.serialize()
+        try:
+            while len(self.important_instructions) > 0:
+                self.cursor.execute(self.important_instructions.pop(0))
+                
+            self.connection.commit()
+            # self.connection.serialize()
+        except:
+            logging.critical("ERROR IN _process_important_instructions. Stopping program here.")
+            traceback.print_exc()
+            with open(ERROR_FILE_PATH + "ERROR_IMP.txt", "a") as file:
+                file.write(traceback.format_exc())
+            exit(50)
+
 
     def _process_normal_instruction(self) -> None:
-        # count = 0
-        while len(self.instructions) > 0:
-            instruction = self.instructions.pop(0)
-            # count += 1
-            if instruction[1] != None: # if data present
-                self.cursor.execute(instruction[0], instruction[1])
-            else:
-                self.cursor.execute(instruction[0])
-                    
-        # logging.debug(f"Added {count} values")
+        try:
+            # count = 0
+            while len(self.instructions) > 0:
+                instruction = self.instructions.pop(0)
+                # count += 1
+                if instruction[1] != None: # if data present
+                    self.cursor.execute(instruction[0], instruction[1])
+                else:
+                    self.cursor.execute(instruction[0])
+                        
+            # logging.debug(f"Added {count} values")
 
-        self.connection.commit()
-        # self.connection.serialize()
+            self.connection.commit()
+            # self.connection.serialize()
+        except:
+            logging.critical("ERROR IN _process_normal_instructions. Stopping program here.")
+            traceback.print_exc()
+            with open(ERROR_FILE_PATH + "ERROR_NOR.txt", "a") as file:
+                file.write(traceback.format_exc())
+            exit(50)
 
 
     def run(self) -> None:

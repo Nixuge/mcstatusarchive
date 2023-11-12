@@ -7,3 +7,5 @@ ERRORS = {
     "Timeout": "Timeout error",
     "ConnectCallFailed": "Connect call failed"
 }
+
+ERROR_FILE_PATH = "/home/nix/"
