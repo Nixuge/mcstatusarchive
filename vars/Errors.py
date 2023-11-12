@@ -9,3 +9,5 @@ ERRORS = {
 }
 
 ERROR_FILE_PATH = "/home/nix/"
+
+ERROR_HAPPENED = {"db": False}

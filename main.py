@@ -2,7 +2,10 @@
 
 # Needs to be on top of everything for it to propagate to imports
 import logging
+import os
+import signal
 from utils.logger import get_proper_logger
+from vars.Errors import ERROR_HAPPENED
 DEBUG_LOG = False
 logger = get_proper_logger(logging.getLogger("root"), DEBUG_LOG)
 
@@ -19,6 +22,10 @@ from vars.DbQueues import DBQUEUES
 async def save_every_x_secs(servers: list):
     every = Timings.save_every
     while True:
+        if ERROR_HAPPENED["db"]:
+            logging.critical("KILLING THE APP DUE TO A DB ERROR.")
+            os.kill(os.getpid(), signal.SIGUSR1)
+        
         start_time = int(time())
         await run_batch_limit(servers)
 

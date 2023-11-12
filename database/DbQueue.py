@@ -1,12 +1,13 @@
 import logging
 from sqlite3 import Connection, Cursor
 import sqlite3
+import sys
 from threading import Thread
 from time import sleep
 import traceback
 
 from database.DbInstance import DbInstance
-from vars.Errors import ERROR_FILE_PATH
+from vars.Errors import ERROR_FILE_PATH, ERROR_HAPPENED
 
 
 class DbQueue(Thread):
@@ -42,10 +43,11 @@ class DbQueue(Thread):
             self.connection.commit()
             # self.connection.serialize()
         except:
-            logging.critical("ERROR IN _process_important_instructions. Stopping program here.")
+            logging.critical("ERROR IN _process_important_instructions.")
             traceback.print_exc()
             with open(ERROR_FILE_PATH + "ERROR_IMP.txt", "a") as file:
                 file.write(traceback.format_exc())
+            ERROR_HAPPENED["db"] = True
             exit(50)
 
 
@@ -65,10 +67,11 @@ class DbQueue(Thread):
             self.connection.commit()
             # self.connection.serialize()
         except:
-            logging.critical("ERROR IN _process_normal_instructions. Stopping program here.")
+            logging.critical("ERROR IN _process_normal_instructions.")
             traceback.print_exc()
             with open(ERROR_FILE_PATH + "ERROR_NOR.txt", "a") as file:
                 file.write(traceback.format_exc())
+            ERROR_HAPPENED["db"] = True
             exit(50)
 
 
