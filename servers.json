@@ -175,9 +175,23 @@
 
         "majin_fr": "majin.fr",
         "play_skyly_fr": "play.skyly.fr",
-        "mc_uhcworld_fr" : "mc.uhcworld.fr"
+        "mc_uhcworld_fr" : "mc.uhcworld.fr",
+        "akumamc_net": "akumamc.net",
 
-        
+        "og_dash_network_net": "og-network.net",
+        "coldpvp_com": "coldpvp.com",
+        "vote_sunrealms_net": "vote.sunrealms.net",
+        "sagepvp_org": "sagepvp.org",
+
+        "mc_roleplayhub_net": "mc.roleplayhub.net",
+        "sololegends_net": "sololegends.net",
+        "enchantedmc_net": "enchantedmc.net",
+        "bridger_land": "bridger.land",
+
+        "dynamicpvp_net": "dynamicpvp.net",
+        "mineshards_com": "mineshards.com",
+        "play_fishonmc_net": "play.fishonmc.net",
+        "esta_land": "esta.land"
     },
     "bugrock": {
         "Mineplex": "pe.mineplex.com",
