@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 from typing import Coroutine
 from servers.BedrockServer import BedrockServerSv
 
@@ -26,6 +27,17 @@ class ServersLoader:
         
         return ip # should be good
 
+    @classmethod
+    def remove_duplicates(cls, serverlist: list):
+        seen = set()
+        duplicates = set()
+        for server in serverlist:
+            if server in seen:
+                duplicates.add(server)
+            else:
+                seen.add(server)
+        return seen, duplicates
+
     def _parse_dict_ips(self):
         for key, Clazz in {"java": JavaServerSv, "bugrock": BedrockServerSv, "bedrock": BedrockServerSv}.items():
             servers: dict | None = self.data.get(key)
@@ -37,11 +49,17 @@ class ServersLoader:
 
     def _parse_list_ips(self):
         for key, Clazz in {"java_list": JavaServerSv, "bedrock_list": BedrockServerSv}.items():
-            servers: dict | None = self.data.get(key)
+            servers: list | None = self.data.get(key)
             if not servers:
                 continue
             
-            for server_ip in servers:
+            servers_noduplicates, duplicates = self.remove_duplicates(servers)
+            if len(duplicates) > 0:
+                logging.error("Duplicates server found in config:")
+                for duplicate in duplicates:
+                    logging.error(duplicate)
+
+            for server_ip in servers_noduplicates:
                 self.all_servers_coroutines.append(Clazz(self.make_table_name_from_ip(server_ip), server_ip))
 
     async def parse(self) -> list[JavaServerSv | BedrockServerSv]:
