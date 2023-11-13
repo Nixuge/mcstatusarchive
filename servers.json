@@ -1,6 +1,7 @@
 {
     "PERMANENTLY_DOWN": {
-        "Onecube": "oneCube.com"
+        "Onecube": "oneCube.com",
+        "PixelParadise (Bedrock)": "play.pixelparadise.gg"
     },
     "java": {
         "Hypixel": "hypixel.net",
@@ -82,7 +83,6 @@
         "play.pixworld.fr",
         "craftok.fr",
         "ghostly.live",
-        "mc.universocraft.com",
         "kokscraft.pl",
         "mc.hycraft.us",
         "play.manacube.net",
@@ -167,7 +167,66 @@
         "dynamicpvp.net",
         "mineshards.com",
         "play.fishonmc.net",
-        "esta.land"
+        "esta.land",
+        "play.waterway-network.net",
+        "play.labs-mc.com",
+        "play.molean.com",
+        "play.wickedprison.org",
+        "play.direskies.net",
+        "mc.remiaft.com",
+        "prismamc.net",
+        "exodusmc.org",
+        "play.castiamc.com",
+        "play.solargn.net",
+        "cylonemc.net",
+        "mc.lotc.co",
+        "lifestealsmp.com",
+        "ilovecatgirls.xyz", 
+        "mc.manacube.net",
+        "gtm.network",
+        "mc.maelk.net",
+        "pixel.mc-complex.com",
+        "bwhub.net",
+        "leonemc.net",
+        "greev.eu",
+        "mcplayhd.net",
+        "teamholy.de",
+        "blotcraft.com",
+        "mc.edenmine.eu",
+        "sharpness.gg",
+        "hypixel.pl",
+        "antiac.net",
+        "play.ecc.eco",
+        "play.topstrix.net",
+        "sp.spworlds.ru",
+        "mcpvp.club",
+        "server.playmonumenta.com",
+        "play.lokamc.com",
+        "gladmc.com",
+        "spm.spworlds.ru",
+        "play.labs-mc.com",
+        "mc.hydracraft.es",
+        "mineheart.net",
+        "hoplite.gg",
+        "play.originrealms.com",
+        "mcstyles.pl",
+        "mc.dogecraft.net",
+        "play.jackpotmc.com",
+        "play.vallenmc.net",
+        "play.coldnetwork.net",
+        "rapy.pl",
+        "play.roxbot.com",
+        "randomkits.net",
+        "catpvp.xyz",
+        "play.pepeland.net",
+        "openmc.net",
+        "play.z-mc.net",
+        "teammlg.net",
+        "dmc-minecraft.ru"
+    ],
+    "comments": [
+        "ilovecatgirls.xyz, egirlsarehot.xyz, technoblade.club, catgirls.xyz are hypixel",
+        "hypixel.pl isn't hypixel tho"
     ],
     "bugrock": {
         "Mineplex": "pe.mineplex.com",
@@ -177,11 +236,14 @@
 
         "InPvP": "play.inpvp.net",
         "NetherGames": "play.nethergames.org",
-        "PixelParadise": "play.pixelparadise.gg",
         "Mineville": "play.inpvp.net",
 
         
         "HyperLands": "play.hyperlandsmc.net",
         "GommeHD": "gommehd.net"
-    }
+    },
+    "bedrock_list": [
+        "grandtheft.mcpe.me",
+        "play.galaxite.net"
+    ]
 }
