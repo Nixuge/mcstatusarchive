@@ -44,7 +44,7 @@ async def run_batch_raw(servers: list[JavaServerSv | BedrockServerSv]):
     logging.info("== Done with batch ==")
 
 
-async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], task_limit: int = 10):
+async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], task_limit: int = 20):
     logging.info("== Starting batch ==")
 
     running_tasks: list[Task] = []
@@ -72,10 +72,6 @@ async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], task_li
 
 
 async def main():
-
-    # print(logger.name)
-    await asyncio.sleep(1)
-
     DBQUEUES.db_queue_java.start()
     DBQUEUES.db_queue_bedrock.start()
 
