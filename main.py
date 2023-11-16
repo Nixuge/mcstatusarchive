@@ -5,6 +5,7 @@ import logging
 import os
 import signal
 from utils.logger import get_proper_logger
+from utils.timer import Timer
 from vars.Errors import ERROR_HAPPENED
 DEBUG_LOG = False
 logger = get_proper_logger(logging.getLogger("root"), DEBUG_LOG)
@@ -46,6 +47,7 @@ async def run_batch_raw(servers: list[JavaServerSv | BedrockServerSv]):
 
 async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], task_limit: int = 50):
     logging.info("== Starting batch ==")
+    timer = Timer()
 
     running_tasks: list[Task] = []
 
@@ -68,15 +70,19 @@ async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], task_li
         await asyncio.sleep(.2)
         # logging.info(f"Remaining tasks: {len(running_tasks)}, Remaining servers: {len(to_add)}")
 
-    logging.info("== Done with batch ==")
+    logging.info(f"== Done with batch == ({timer.end()})")
 
 
 async def main():
+    logging.info("Starting.")
+    timer = Timer()
+    
     DBQUEUES.db_queue_java.start()
     DBQUEUES.db_queue_bedrock.start()
+    logging.info(f"Databases loaded. ({timer.step()})")
 
     servers = await ServersLoader("servers.json").parse()
-    logging.info(f"{len(servers)} servers loaded.")
+    logging.info(f"{len(servers)} servers loaded. ({timer.end()})")
 
     await save_every_x_secs(servers)
 
