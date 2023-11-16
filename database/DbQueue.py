@@ -7,7 +7,7 @@ from time import sleep
 import traceback
 
 from database.DbInstance import DbInstance
-from vars.Errors import ERROR_FILE_PATH, ERROR_HAPPENED
+from vars.Errors import ERROR_FILE_PATH, ERROR_HAPPENED, EXIT_ON_DB_ERROR
 
 
 class DbQueue(Thread):
@@ -47,8 +47,9 @@ class DbQueue(Thread):
             traceback.print_exc()
             with open(ERROR_FILE_PATH + "ERROR_IMP.txt", "a") as file:
                 file.write(traceback.format_exc())
-            ERROR_HAPPENED["db"] = True
-            exit(50)
+            if EXIT_ON_DB_ERROR:
+                ERROR_HAPPENED["db"] = True
+                exit(50)
 
 
     def _process_normal_instruction(self) -> None:
@@ -71,8 +72,9 @@ class DbQueue(Thread):
             traceback.print_exc()
             with open(ERROR_FILE_PATH + "ERROR_NOR.txt", "a") as file:
                 file.write(traceback.format_exc())
-            ERROR_HAPPENED["db"] = True
-            exit(50)
+            if EXIT_ON_DB_ERROR:
+                ERROR_HAPPENED["db"] = True
+                exit(50)
 
 
     def run(self) -> None:

@@ -10,4 +10,6 @@ ERRORS = {
 
 ERROR_FILE_PATH = "/home/nix/"
 
+EXIT_ON_DB_ERROR = True
+
 ERROR_HAPPENED = {"db": False}
