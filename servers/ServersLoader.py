@@ -21,10 +21,10 @@ class ServersLoader:
 
     @classmethod
     def make_table_name_from_ip(cls, ip: str):
-        ip = ip.replace("-", "_dash_").replace(".", "_")
+        ip = ip.replace("-", "_dash_").replace(":", "_colon_").replace(".", "_")
         if ip[0] not in "abcdefghijklmnopqrstuvwxyz_":
             ip = '_' + ip
-        
+
         return ip # should be good
 
     @classmethod
