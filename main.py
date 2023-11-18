@@ -7,6 +7,7 @@ import signal
 from utils.logger import get_proper_logger
 from utils.timer import Timer
 from vars.Errors import ERROR_HAPPENED
+from vars.Frontend import FRONTEND_UPDATE_THREAD
 DEBUG_LOG = False
 logger = get_proper_logger(logging.getLogger("root"), DEBUG_LOG)
 
@@ -75,10 +76,14 @@ async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], task_li
 
 async def main():
     logging.info("Starting.")
+
+    FRONTEND_UPDATE_THREAD.start()
+
     timer = Timer()
     
     DBQUEUES.db_queue_java.start()
     DBQUEUES.db_queue_bedrock.start()
+
     logging.info(f"Databases loaded. ({timer.step()})")
 
     servers = await ServersLoader("servers.json").parse()

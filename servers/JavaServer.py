@@ -13,16 +13,19 @@ from database.DbUtils import ServerType, DbUtils
 from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
 from vars.Errors import ERRORS
+from vars.Frontend import FRONTEND_UPDATE_THREAD
 from vars.Timings import Timings
 
 class JavaServerSv(ServerSv):
     server: JavaServer
+    table_name: str
     insert_query: str
 
     async def __init__(self, table_name: str, ip: str, port: int = 25565) -> None:
         # inheriting
         await super().__init__(table_name, ip, port)
         # get non changing values
+        self.table_name = table_name
         self.server = await JavaServer.async_lookup(ip, port)
         self.insert_query = JavaQueries.get_insert_query(table_name)
         # create db if not present
@@ -58,6 +61,8 @@ class JavaServerSv(ServerSv):
 
         data = self.get_values_dict(status)
         data = self.update_values(data)  # only keep changed ones
+        FRONTEND_UPDATE_THREAD.add_update(self.table_name, data)
+
         data_list = DbUtils.get_args_in_order_from_dict(data, ServerType.JAVA)
         DBQUEUES.db_queue_java.add_instuction(self.insert_query, data_list)
         logging.getLogger("root").debug(f"Done grabbing {self.ip} !")
