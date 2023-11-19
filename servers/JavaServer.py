@@ -26,8 +26,6 @@ class JavaServerSv(ServerSv):
         await super().__init__(table_name, ip, port)
         # get non changing values
         self.table_name = table_name
-        if "unitedcraft" in table_name:
-            logging.warning(table_name)
         self.server = await JavaServer.async_lookup(ip, port)
         self.insert_query = JavaQueries.get_insert_query(table_name)
         # create db if not present
