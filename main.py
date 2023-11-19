@@ -2,14 +2,16 @@
 
 # Needs to be on top of everything for it to propagate to imports
 import logging
+from utils.logger import get_proper_logger
+DEBUG_LOG = False
+logger = get_proper_logger(logging.getLogger("root"), DEBUG_LOG)
+
 import os
 import signal
-from utils.logger import get_proper_logger
 from utils.timer import Timer
 from vars.Errors import ErrorHandler
 from vars.Frontend import FRONTEND_UPDATE_THREAD
-DEBUG_LOG = False
-logger = get_proper_logger(logging.getLogger("root"), DEBUG_LOG)
+
 
 import asyncio
 from asyncio import Task
@@ -94,3 +96,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+# IMPORTANT:
+# SWITCH FAVICONS FROM A BLOB TO A MD5 AND SAVE THE ICONS LOCALLY, 
+# AS SOME SERVERS (8B8T) ARE BLOATING THE DB BY CHANGING FAVICONS QUICKLY

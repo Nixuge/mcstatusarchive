@@ -83,7 +83,13 @@ class JavaServerSv(ServerSv):
     @staticmethod
     def _get_favicon(favicon: str | None) -> bytes | str:
         if favicon:
-            # return "DISABLED FOR TESTING"
+            # TODO (maybe?): Switch to storing images externally as files,
+            # & only storing the MD5s here
+            # -> requires altering the db (column favicon BLOB -> TEXT)
+            # -> less practical
+            # -> only useful for the few servers changing favicons often
+            # ---> 8b8t.me (rotating favicons)
+            # ---> craftplay.pl (for some reason same favicon but a bit different???)
             return base64.decodebytes(bytes(favicon.split(',')[-1], "ascii"))
         return "None"
 
