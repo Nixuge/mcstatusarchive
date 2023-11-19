@@ -1,3 +1,7 @@
+import logging
+import traceback
+
+
 ERRORS = {
     "[Errno -3] Temporary failure in name resolution": "Name Resolution Error",
     "[Errno -2] Name or service not known": "Name unknown",
@@ -8,8 +12,62 @@ ERRORS = {
     "ConnectCallFailed": "Connect call failed"
 }
 
-ERROR_FILE_PATH = "/home/nix/"
+class ErrorHandler:
+    _error_file_path = "/home/nix/"
+    _actions = {
+        "dbimportant": ["log_critical", "traceback", "traceback_file", "exit_all", "exit_thread"],
+        "dbnormal": ["log_critical", "traceback", "traceback_file", "exit_all", "exit_thread"],
+        "frontend": ["log_error", "log_file_home", "exit_thread"]
+    }
+    _errors_counts = {}
+    should_stop = False
 
-EXIT_ON_DB_ERROR = True
+    # Returns a non-0 int if should exit
+    @classmethod
+    def add_error(cls, error: str) -> int:
+        err_actions = cls._actions.get(error)
+        if not err_actions:
+            return cls._unknown_error(error)
+        
+        cls._up_error_count(error)
 
-ERROR_HAPPENED = {"db": False}
+        if "log_critical" in err_actions:
+            logging.critical("Critical error happened: " + error)
+        if "log_error" in err_actions:
+            logging.error("Non-critical error happened: " + error)
+        if "traceback" in err_actions:
+            traceback.print_exc()
+        if "traceback_file" in err_actions:
+            cls._traceback_to_file(error)
+        
+        if "exit_all" in err_actions:
+            cls.should_stop = True
+        
+        if "exit_thread" in err_actions:
+            return cls._get_exit_code(error)
+        return 0
+
+    @classmethod
+    def _unknown_error(cls, error: str) -> int:
+        logging.critical("Unknown error type " + error)
+        logging.critical("Exiting")
+        cls._traceback_to_file(f"UNKNOWN_{error}")
+        cls.should_stop = True
+        return 1
+
+    @classmethod
+    def _up_error_count(cls, error: str):
+        if not error in cls._errors_counts.keys():
+            cls._errors_counts[error] = 1
+        else:
+            cls._errors_counts[error] += 1
+
+    @classmethod
+    def _get_exit_code(cls, error: str) -> int:
+        index_err = list(cls._actions.keys()).index(error)
+        return index_err + 1 # 1 is reserved for "unknown errors"
+
+    @classmethod
+    def _traceback_to_file(cls, error: str):
+        with open(cls._error_file_path + f"ERROR_{error}.txt", "a") as file:
+            file.write(traceback.format_exc())

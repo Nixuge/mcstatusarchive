@@ -5,6 +5,8 @@ from threading import Thread
 from time import sleep
 import httpx
 
+from vars.Errors import ErrorHandler
+
 UPDATE_URL = "http://127.0.0.1:50474/update_fields"
 
 # TODO: support errors & bedrock
@@ -43,8 +45,8 @@ class FrontendUpdater(Thread):
             self._send_update(all_updates)
                         
         except:
-            logging.error("Error on frontend update thread !")
-            logging.error("TODO: HANDLE THIS ON Errors.PY")
+            exit_code = ErrorHandler.add_error("frontend")
+            if exit_code > 0: exit(exit_code)
 
 
     def run(self) -> None:

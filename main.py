@@ -6,7 +6,7 @@ import os
 import signal
 from utils.logger import get_proper_logger
 from utils.timer import Timer
-from vars.Errors import ERROR_HAPPENED
+from vars.Errors import ErrorHandler
 from vars.Frontend import FRONTEND_UPDATE_THREAD
 DEBUG_LOG = False
 logger = get_proper_logger(logging.getLogger("root"), DEBUG_LOG)
@@ -24,8 +24,8 @@ from vars.DbQueues import DBQUEUES
 async def save_every_x_secs(servers: list):
     every = Timings.save_every
     while True:
-        if ERROR_HAPPENED["db"]:
-            logging.critical("KILLING THE APP DUE TO A DB ERROR.")
+        if ErrorHandler.should_stop:
+            logging.critical("KILLING THE APP.")
             os.kill(os.getpid(), signal.SIGUSR1)
         
         start_time = int(time())
