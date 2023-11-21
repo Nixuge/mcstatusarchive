@@ -43,6 +43,9 @@ class JavaServerSv(ServerSv):
         try:
             async with asyncio.timeout(Timings.server_timeout):
                 status = await self.server.async_status()
+                # TODO: EXPERIMENT & IMPLEMENT W QUERY LOOKUP.
+                # CAN GET SERVER PLUGINS, BRAND & SOME OTHER DATA.
+                # query = await self.server.async_query()
         # TODO:
         # figure out how to remove the nasty "socket.send() raised exception." prints
         # Should be done in logger
