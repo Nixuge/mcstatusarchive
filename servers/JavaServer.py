@@ -96,10 +96,9 @@ class JavaServerSv(ServerSv):
         
         # New ping
         elif isinstance(raw, dict):
-            rawStr = str(raw)
             # Extra = new format, so if extra return the new format
             if "extra" in raw.keys():
-                return rawStr
+                return json.dumps(raw)
 
             # Text = the old format with §s
             text = raw.get("text")
@@ -107,14 +106,7 @@ class JavaServerSv(ServerSv):
             # Just in case there's no text for some reason?
             if text == None: return ""
             
-            try:
-                textJson = json.dumps(text)
-            except:
-                exit_code = ErrorHandler.add_error("motd_json_dumps", {"raw": raw, "text": text})
-                if exit_code > 0: exit(exit_code)
-                return ""
-            
-            return textJson
+            return text
         
         else:
             exit_code = ErrorHandler.add_error("motd_parse_type", {"raw": raw, "type": type(raw)})
