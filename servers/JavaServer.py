@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import json
 import logging
 from time import time
 from mcstatus import JavaServer
@@ -102,14 +103,18 @@ class JavaServerSv(ServerSv):
 
             # Text = the old format with §s
             text = raw.get("text")
-            # Just in case there's no text for some reason?
 
-            if text == None:
+            # Just in case there's no text for some reason?
+            if text == None: return ""
+            
+            try:
+                textJson = json.dumps(text)
+            except:
+                exit_code = ErrorHandler.add_error("motd_json_dumps", {"raw": raw, "text": text})
+                if exit_code > 0: exit(exit_code)
                 return ""
             
-            # Return the text, should be equal to status.description (or almost),
-            # eg Syuu has an additional '§r' on status.description (parsing error?)
-            return text
+            return textJson
         
         else:
             exit_code = ErrorHandler.add_error("motd_parse_type", {"raw": raw, "type": type(raw)})

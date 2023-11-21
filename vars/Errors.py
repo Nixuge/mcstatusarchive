@@ -19,7 +19,8 @@ class ErrorHandler:
         "dbimportant": ["log_critical", "error_file","traceback",  "traceback_file", "exit_all", "exit_thread"],
         "dbnormal": ["log_critical", "error_file","traceback",  "traceback_file", "exit_all", "exit_thread"],
         "frontend": ["log_error", "error_file", "exit_thread"],
-        "motd_parse_type": ["log_error", "error_file"]
+        "motd_parse_type": ["log_error", "error_file"],
+        "motd_json_dumps": ["log_error", "error_file"]
     }
     _errors_counts = {}
     should_stop = False
