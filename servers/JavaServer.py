@@ -12,7 +12,7 @@ from servers.Server import ServerSv
 from database.DbUtils import ServerType, DbUtils
 from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
-from vars.Errors import ERRORS
+from vars.Errors import ERRORS, ErrorHandler
 from vars.Frontend import FRONTEND_UPDATE_THREAD
 from vars.Timings import Timings
 
@@ -42,13 +42,15 @@ class JavaServerSv(ServerSv):
         # logging.debug(f"Starting to grab {self.ip}.")
         try:
             async with asyncio.timeout(Timings.server_timeout):
-                status = await self.server.async_status()
+                # version = mc version for the ping.
+                # Default is 47 (1.8 -> 1.8.9)
+                # Set it to 764 (1.20.2, currently latest)
+                # Should still be able to ping old clients, 
+                # While showing new fancy hex colors on servers that support it
+                status = await self.server.async_status(version=764) 
                 # TODO: EXPERIMENT & IMPLEMENT W QUERY LOOKUP.
                 # CAN GET SERVER PLUGINS, BRAND & SOME OTHER DATA.
                 # query = await self.server.async_query()
-        # TODO:
-        # figure out how to remove the nasty "socket.send() raised exception." prints
-        # Should be done in logger
         except TimeoutError:
             logging.warn(f"ERRORSPLIT{self.ip}: {ERRORS.get('Timeout')}")
             return
@@ -79,9 +81,40 @@ class JavaServerSv(ServerSv):
             "players_sample": self._get_player_sample(status.players.sample),
             "version_protocol": status.version.protocol,
             "version_name": status.version.name,
-            "motd": status.description,
+            "motd": self._parse_motd(status),
             "favicon": self._get_favicon(status.favicon)
         }
+
+    @staticmethod
+    def _parse_motd(status: PingResponse) -> dict | str:
+        raw = status.motd.raw
+
+        # Normal legacy ping
+        if isinstance(raw, str):
+            return raw
+        
+        # New ping
+        elif isinstance(raw, dict):
+            rawStr = str(raw)
+            # Extra = new format, so if extra return the new format
+            if "extra" in raw.keys():
+                return rawStr
+
+            # Text = the old format with §s
+            text = raw.get("text")
+            # Just in case there's no text for some reason?
+
+            if text == None:
+                return ""
+            
+            # Return the text, should be equal to status.description (or almost),
+            # eg Syuu has an additional '§r' on status.description (parsing error?)
+            return text
+        
+        else:
+            exit_code = ErrorHandler.add_error("motd_parse_type", {"raw": raw, "type": type(raw)})
+            if exit_code > 0: exit(exit_code)
+        return "?"
 
     @staticmethod
     def _get_favicon(favicon: str | None) -> bytes | str:

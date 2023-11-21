@@ -1,3 +1,4 @@
+import json
 import logging
 import traceback
 
@@ -15,16 +16,17 @@ ERRORS = {
 class ErrorHandler:
     _error_file_path = "/home/nix/"
     _actions = {
-        "dbimportant": ["log_critical", "traceback", "traceback_file", "exit_all", "exit_thread"],
-        "dbnormal": ["log_critical", "traceback", "traceback_file", "exit_all", "exit_thread"],
-        "frontend": ["log_error", "log_file_home", "exit_thread"]
+        "dbimportant": ["log_critical", "error_file","traceback",  "traceback_file", "exit_all", "exit_thread"],
+        "dbnormal": ["log_critical", "error_file","traceback",  "traceback_file", "exit_all", "exit_thread"],
+        "frontend": ["log_error", "error_file", "exit_thread"],
+        "motd_parse_type": ["log_error", "error_file"]
     }
     _errors_counts = {}
     should_stop = False
 
     # Returns a non-0 int if should exit
     @classmethod
-    def add_error(cls, error: str) -> int:
+    def add_error(cls, error: str, data: dict | None = {}) -> int:
         err_actions = cls._actions.get(error)
         if not err_actions:
             return cls._unknown_error(error)
@@ -35,6 +37,8 @@ class ErrorHandler:
             logging.critical("Critical error happened: " + error)
         if "log_error" in err_actions:
             logging.error("Non-critical error happened: " + error)
+        if "error_file" in err_actions:
+            cls._data_to_file(error, data)
         if "traceback" in err_actions:
             traceback.print_exc()
         if "traceback_file" in err_actions:
@@ -66,6 +70,13 @@ class ErrorHandler:
     def _get_exit_code(cls, error: str) -> int:
         index_err = list(cls._actions.keys()).index(error)
         return index_err + 1 # 1 is reserved for "unknown errors"
+
+    @classmethod
+    def _data_to_file(cls, error: str, data: dict | None):
+        with open(cls._error_file_path + f"ERROR_{error}.txt", "a") as file:
+            file.write("Error happened:" + error)
+            if data:
+                file.write("Additional data: " + json.dumps(data))
 
     @classmethod
     def _traceback_to_file(cls, error: str):
