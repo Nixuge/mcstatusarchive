@@ -606,7 +606,45 @@
         "pixelmon.happycloudmc.com",
         "jogarbrasilcraft.com",
         "mcfunny.su",
-        "play.woodcraft.hu"
+        "play.woodcraft.hu",
+        "play.vipermc.net",
+        "play.extractmc.net",
+        "astrely.cc",
+        "arivi.pl",
+        "gulag.pw",
+        "play.minecadia.com",
+        "liruhg.de",
+        "beyondpvp.net",
+        "oyna.adalances.com",
+        "naufragio.es",
+        "mc.pokeland.world",
+        "frosthex.com",
+        "weakestww.ru",
+        "saifed.net",
+        "mooncraft.es",
+        "edawg878.com",
+        "play.democracycraft.net",
+        "melvin501.de",
+        "lunarbox.minecraft.best",
+        "play.madcraft.ir",
+        "moohub.net",
+        "kyori.live",
+        "raymano.eu",
+        "ghoulpvp.net",
+        "latinplay.net",
+        "inmortalmc.net",
+        "mc.boatlabs.net",
+        "corejourney.org",
+        "jogarhappy.com",
+        "mc.boucraft.net",
+        "totalfreedom.tf",
+        "alpha.tagfeuds.com",
+        "cosmicx.net",
+        "balacobaco.net",
+        "play.townysmp.com",
+        "hub.megacrafting.com",
+        "play.freebuild.fr",
+        "szeerko.pl"
     ],
     "duplicates": {
         "play.schoolrp.net": "roleplayhub.com",
@@ -740,7 +778,12 @@
         "2b2t.org.ua": "2b2t.org.ru",
         "cylonemc.com": "cylonemc.net",
         "ilovecatgirls.xyz": "hypixel.net",
-        "play.wildnetwork.net": "play.wildprison.net"
+        "play.wildnetwork.net": "play.wildprison.net",
+        "minecraftonline.com": "Already set in dict",
+        "cobra.gg": "play.vipermc.net",
+        "vipermc.vorexservices.net": "play.vipermc.net",
+        "zoomhq.us": "saifed.net",
+        "moocraftpvp.com": "moohub.net"
     },
     "comments": [
         "ilovecatgirls.xyz, egirlsarehot.xyz, technoblade.club, catgirls.xyz are hypixel",
@@ -782,7 +825,7 @@
         "play.bumblecraft.net",
         "play.fallentech.io",
         "demo.mcstatus.io",
-        "play.blossomcraft.org"
-
+        "play.blossomcraft.org",
+        "play.minecadia.com"
     ]
 }
