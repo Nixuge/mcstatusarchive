@@ -22,6 +22,11 @@ class ServersLoader:
     @classmethod
     def make_table_name_from_ip(cls, ip: str):
         ip = ip.replace("-", "_dash_").replace(":", "_colon_").replace(".", "_")
+        
+        if " " in ip:
+            logging.error(f"ip has a space: {ip}")
+            ip = ip.replace(" ", "")
+
         if ip[0] not in "abcdefghijklmnopqrstuvwxyz_":
             ip = '_' + ip
 
