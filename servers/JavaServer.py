@@ -3,6 +3,7 @@ import base64
 import json
 import logging
 from time import time
+import dns.resolver
 from mcstatus import JavaServer
 from mcstatus.pinger import PingResponse
 from mcstatus.status_response import JavaStatusPlayer
@@ -27,7 +28,23 @@ class JavaServerSv(ServerSv):
         await super().__init__(table_name, ip, port)
         # get non changing values
         self.table_name = table_name
-        self.server = await JavaServer.async_lookup(ip, port)
+
+        # Trying without an errorhandler for now.
+        tries = 0
+        success = False
+        while tries < 3 and not success:
+            try:
+                self.server = await JavaServer.async_lookup(ip, port)
+                success = True
+            except dns.resolver.NoNameservers: 
+                tries += 1
+                logging.error(f"DNS lookup failed for {ip} (try n{tries})")
+            except Exception as e:
+                tries += 1
+                logging.error(f"Error happened looking up {ip}: {e} (try n{tries})")
+        if not success:
+            raise Exception(f"DNS ISSUE. LOOKUP FAILED FOR IP {ip}.")
+
         self.insert_query = JavaQueries.get_insert_query(table_name)
         # create db if not present
         DBQUEUES.db_queue_java.add_important_instruction(
