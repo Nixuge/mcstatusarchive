@@ -247,7 +247,6 @@
         "mc.zotticraft.net",
         "mustpvp.pl",
         "trappedmc.com",
-        "roleplayhub.com",
         "dracolegend.net",
         "play.alphaprison.net",
         "mc.buildersrefuge.com",
@@ -1280,7 +1279,8 @@
         "server.sandlotminecraft.com",
         "play.torrentsmp.com",
         "bedrock.underblock.gg",
-        "playwavecraft.net:25566"
+        "playwavecraft.net:25566",
+        "pe.roleplayhub.net"
     ],
     "bedrock_duplicates": {
         "find.manacube.com": "play.manacube.net",
