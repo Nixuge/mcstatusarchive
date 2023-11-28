@@ -12,6 +12,7 @@ from database.DbQueries import JavaQueries
 from servers.Server import ServerSv
 
 from database.DbUtils import ServerType, DbUtils
+from utils.timer import CumulativeTimers
 from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
 from vars.Errors import ERRORS, ErrorHandler
@@ -30,6 +31,7 @@ class JavaServerSv(ServerSv):
         self.table_name = table_name
 
         # Trying without an errorhandler for now.
+        CumulativeTimers.get_timer("Lookup").start_time(table_name)
         tries = 0
         success = False
         while tries < 3 and not success:
@@ -44,6 +46,7 @@ class JavaServerSv(ServerSv):
                 logging.error(f"Error happened looking up {ip}: {e} (try n{tries})")
         if not success:
             raise Exception(f"DNS ISSUE. LOOKUP FAILED FOR IP {ip}.")
+        CumulativeTimers.get_timer("Lookup").end_time(table_name)
 
         self.insert_query = JavaQueries.get_insert_query(table_name)
         # create db if not present
@@ -52,9 +55,11 @@ class JavaServerSv(ServerSv):
         )
 
         # load last values from db (if any)
+        CumulativeTimers.get_timer("Previous value").start_time(table_name)
         self.values = DbUtils.get_previous_values_from_db(
             DBINSTANCES.java_instance.cursor, table_name, ServerType.JAVA
         )
+        CumulativeTimers.get_timer("Previous value").end_time(table_name)
 
     async def save_status(self):
         # logging.debug(f"Starting to grab {self.ip}.")

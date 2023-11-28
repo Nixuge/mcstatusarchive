@@ -35,14 +35,26 @@ class CumulativeTimer:
         return "{:.2f}".format(self.total_time / 1000000000)
 
 class CumulativeTimers:
-    cumulative_timers: dict
+    cumulative_timers: dict[str, CumulativeTimer] = {}
+    @classmethod
+    def add_timers(cls, *timers: str):
+        for timer in timers:
+            cls.add_timer(timer)
+
+    @classmethod
+    def remove_timers(cls, *timers: str):
+        for timer in timers:
+            cls.remove_timer(timer)
+
+    @classmethod
+    def get_timer(cls, timer_name: str) -> CumulativeTimer:
+        return cls.cumulative_timers.get(timer_name) # type: ignore
+
     @classmethod
     def add_timer(cls, timer_name: str):
-        if not cls.cumulative_timers:
-            cls.cumulative_timers = {}
         cls.cumulative_timers[timer_name] = CumulativeTimer()
     
     @classmethod
     def remove_timer(cls, timer_name: str):
-        if cls.cumulative_timers and timer_name in cls.cumulative_timers.keys():
+        if timer_name in cls.cumulative_timers.keys():
             cls.cumulative_timers.pop(timer_name)

@@ -5,6 +5,7 @@ from typing import Coroutine
 from servers.BedrockServer import BedrockServerSv
 
 from servers.JavaServer import JavaServerSv
+from utils.timer import CumulativeTimers
 
 
 class ServersLoader:
@@ -68,9 +69,16 @@ class ServersLoader:
                 self.all_servers_coroutines.append(Clazz(self.make_table_name_from_ip(server_ip), server_ip))
 
     async def parse(self) -> list[JavaServerSv | BedrockServerSv]:
+        timers = ("Lookup", "Previous value")
+        CumulativeTimers.add_timers(*timers)
+
         self._parse_dict_ips()
         self._parse_list_ips()
 
         all_servers = await asyncio.gather(*self.all_servers_coroutines)
+
+        for timer_key in timers:
+            logging.info(f"{timer_key} took {CumulativeTimers.get_timer(timer_key).stop()}s total (async)")
+        CumulativeTimers.remove_timers(*timers)
 
         return all_servers
