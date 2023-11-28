@@ -11,7 +11,7 @@ from database.DbUtils import ServerType, DbUtils
 from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
 from vars.Errors import ERRORS
-from vars.Timings import Timings
+from vars.config import Timings
 
 
 class BedrockServerSv(ServerSv):
@@ -35,7 +35,7 @@ class BedrockServerSv(ServerSv):
 
     async def save_status(self):
         try:
-            async with asyncio.timeout(Timings.server_timeout):
+            async with asyncio.timeout(Timings.SERVER_TIMEOUT):
                 status = await self.server.async_status()
         except TimeoutError:
             logging.warn(f"ERRORSPLIT{self.ip}: {ERRORS.get('Timeout')}")

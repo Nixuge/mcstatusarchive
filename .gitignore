@@ -4,3 +4,4 @@
 *.BAK
 info.txt
 logs/
+config.json

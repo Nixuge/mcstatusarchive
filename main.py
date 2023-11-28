@@ -20,11 +20,10 @@ from typing import Coroutine
 from servers.BedrockServer import BedrockServerSv
 from servers.JavaServer import JavaServerSv
 from servers.ServersLoader import ServersLoader
-from vars.Timings import Timings
+from vars.config import Timings
 from vars.DbQueues import DBQUEUES
 
 async def save_every_x_secs(servers: list):
-    every = Timings.save_every
     while True:
         if ErrorHandler.should_stop:
             logging.critical("KILLING THE APP.")
@@ -34,7 +33,7 @@ async def save_every_x_secs(servers: list):
         await run_batch_limit(servers)
 
         logging.info("[Waiting for timer to finish...]")
-        while start_time + every > int(time()):
+        while start_time + Timings.SAVE_EVERY > int(time()):
             await asyncio.sleep(.01)
 
 

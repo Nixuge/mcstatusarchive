@@ -16,7 +16,7 @@ from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
 from vars.Errors import ERRORS, ErrorHandler
 from vars.Frontend import FRONTEND_UPDATE_THREAD
-from vars.Timings import Timings
+from vars.config import Timings
 
 class JavaServerSv(ServerSv):
     server: JavaServer
@@ -59,7 +59,7 @@ class JavaServerSv(ServerSv):
     async def save_status(self):
         # logging.debug(f"Starting to grab {self.ip}.")
         try:
-            async with asyncio.timeout(Timings.server_timeout):
+            async with asyncio.timeout(Timings.SERVER_TIMEOUT):
                 # version = mc version for the ping.
                 # Default is 47 (1.8 -> 1.8.9)
                 # Set it to 764 (1.20.2, currently latest)
