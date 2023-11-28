@@ -17,8 +17,8 @@ import asyncio
 from asyncio import Task
 from time import time
 from typing import Coroutine
-from servers.BedrockServer import BedrockServerSv
-from servers.JavaServer import JavaServerSv
+from servers.bedrock.BedrockServer import BedrockServerSv
+from servers.java.JavaServer import JavaServerSv
 from servers.ServersLoader import ServersLoader
 from vars.config import Timings
 from vars.DbQueues import DBQUEUES
