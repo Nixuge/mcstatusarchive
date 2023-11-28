@@ -27,7 +27,7 @@ class ServersLoader:
             logging.error(f"ip has a space: {ip}")
             ip = ip.replace(" ", "")
 
-        if ip[0] not in "abcdefghijklmnopqrstuvwxyz_":
+        if ip[0] not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_":
             ip = '_' + ip
 
         return ip # should be good

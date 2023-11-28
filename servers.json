@@ -949,7 +949,13 @@
         "gsgserver.com",
         "mc.gtamine.com",
         "play.horusmc.net",
-        "play.mcvpg.org"
+        "play.mcvpg.org",
+        "play.topstrix.net",
+        "bozon.online",
+        "moshimc.net",
+        "gomme.dev",
+        "dagilp.net",
+        "mc.susuminers.online"
     ],
     "duplicates": {
         "play.schoolrp.net": "roleplayhub.com",
@@ -1191,12 +1197,13 @@
         "mc.lotc.co": "login.lordofthecraft.net",
         "mlgrush.net": "antiac.net",
         "topstrix.com": "play.topstrix.net",
-        "randomkits.net": "impendmc.net (accidentally dropped it while removing duplicate tables, woops)",
+        "randomkits.net": "impendmc.net",
         "play.bridgescrims.net": "scrims.network",
         "play.thedestinymc.com": "play.pokewild.com",
         "survivalrolemine.no-ip.org": "srolemine.com",
         "mc.lifesteal.com": "play.respawn.org",
-        "purgatoryprison.com": "billionaire.city"
+        "purgatoryprison.com": "billionaire.city",
+        "roleplayhub.com": "mc.roleplayhub.net"
     },
     "comments": [
         "ilovecatgirls.xyz, egirlsarehot.xyz, technoblade.club, catgirls.xyz are hypixel",
