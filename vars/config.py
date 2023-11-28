@@ -1,8 +1,3 @@
-# Note:
-# This checks (or at least will in the future check) for 
-# - too many duplicates in the motd/players_sample/favicon
-# - too many changes (non duplicate) in those columns
-# - too many failed connections (socket, timeout, etc)
 import json
 import logging
 from typing import Type, TypeVar
@@ -42,6 +37,11 @@ class Configurator:
 Configurator.init()
 
 
+# Note:
+# This checks (or at least will in the future check if ~) for 
+# ~ too many duplicates in the motd/players_sample/favicon
+# ~ too many changes (non duplicate) in those columns -> change to gzipped data
+# ~ too many failed connections (socket, timeout, etc)
 class Startup:
     SHOULD_PERFORM_STARTUP_CHECKS = Configurator.get_value("should_perform_startup_checks", True)
 
