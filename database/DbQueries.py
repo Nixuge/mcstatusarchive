@@ -45,3 +45,12 @@ class JavaQueries:
     @staticmethod
     def get_insert_query(name: str) -> str:
         return f"""INSERT INTO {name} VALUES (?,?,?,?,?,?,?,?,?);"""
+
+class GlobalQueries:
+    @staticmethod
+    def already_exists(name: str) -> str:
+        return f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{name}';"
+
+    @staticmethod
+    def get_table_info(name: str) -> str:
+        return f"SELECT name, type FROM pragma_table_info('{name}');"

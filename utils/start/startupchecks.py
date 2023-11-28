@@ -5,7 +5,8 @@ from vars.DbInstances import DBINSTANCES
 keys = {
     "favicon": 8,
     "motd": 7,
-    "players_sample": 4
+    "players_sample": 4,
+    "version_name": 6
 }
 
 def run_startup_checks(table_name: str):
