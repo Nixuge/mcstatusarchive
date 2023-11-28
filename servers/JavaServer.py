@@ -12,12 +12,13 @@ from database.DbQueries import JavaQueries
 from servers.Server import ServerSv
 
 from database.DbUtils import ServerType, DbUtils
+from utils.start.startupchecks import run_startup_checks
 from utils.timer import CumulativeTimers
 from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
 from vars.Errors import ERRORS, ErrorHandler
 from vars.Frontend import FRONTEND_UPDATE_THREAD
-from vars.config import Timings
+from vars.config import Startup, Timings
 
 class JavaServerSv(ServerSv):
     server: JavaServer
@@ -60,6 +61,9 @@ class JavaServerSv(ServerSv):
             DBINSTANCES.java_instance.cursor, table_name, ServerType.JAVA
         )
         CumulativeTimers.get_timer("Previous value").end_time(table_name)
+
+        if Startup.SHOULD_PERFORM_STARTUP_CHECKS:
+            run_startup_checks(table_name)
 
     async def save_status(self):
         # logging.debug(f"Starting to grab {self.ip}.")
