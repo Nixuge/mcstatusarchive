@@ -70,7 +70,6 @@ class ServersLoader:
 
     async def parse(self) -> list[JavaServerSv | BedrockServerSv]:
         timers = ("Lookup", "Previous value")
-        CumulativeTimers.add_timers(*timers)
 
         self._parse_dict_ips()
         self._parse_list_ips()
@@ -78,7 +77,8 @@ class ServersLoader:
         all_servers = await asyncio.gather(*self.all_servers_coroutines)
 
         for timer_key in timers:
-            logging.info(f"{timer_key} took {CumulativeTimers.get_timer(timer_key).stop()}s total (async)")
+            times = CumulativeTimers.get_timer(timer_key).stop()
+            logging.info(f"{timer_key} took {times[0]}s total ({times[1]}s average)")
         CumulativeTimers.remove_timers(*timers)
 
         return all_servers
