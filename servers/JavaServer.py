@@ -7,7 +7,7 @@ import dns.resolver
 from mcstatus import JavaServer
 from mcstatus.pinger import PingResponse
 from mcstatus.status_response import JavaStatusPlayer
-from database.DbQueries import GlobalQueries, JavaQueries
+from database.DbQueries import GlobalQueries, JavaDuplicateQueries, JavaQueries
 
 from servers.Server import ServerSv
 
@@ -17,33 +17,24 @@ from utils.timer import CumulativeTimers
 from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
 from vars.Errors import ERRORS, ErrorHandler
+from vars.ExceptedKeys import JAVA_EXCEPTED_KEYS
 from vars.Frontend import FRONTEND_UPDATE_THREAD
 from vars.config import Startup, Timings
 
+
 class JavaServerFlags:
-    EXCEPTED_KEYS = {
-        "players_sample": "TEXT",
-        "version_name": "VARCHAR(255)",
-        "motd": "TEXT",
-        "favicon": "BLOB(65534)"
-    }
+    flags_dict: dict
     def __init__(self, table_name: str) -> None:
-        self.motd_duplicates = False
-        self.playersample_duplicate = False
-        self.favicon_duplicate = False
-        self.versionsample_duplicate = False
+        self.flags_dict = {}
 
         exists = bool(DBINSTANCES.java_instance.cursor.execute(GlobalQueries.already_exists(table_name)).fetchone()[0])
         if not exists:
             return
         for key, column_type in DBINSTANCES.java_instance.cursor.execute(GlobalQueries.get_table_info(table_name)).fetchall():
-            if key not in self.EXCEPTED_KEYS.keys() or column_type == self.EXCEPTED_KEYS[key]: 
+            if key not in JAVA_EXCEPTED_KEYS.keys() or column_type == JAVA_EXCEPTED_KEYS[key]: 
                 continue
-            match key:
-                case "players_sample": self.playersample_duplicate = True
-                case "version_name": self.versionsample_duplicate = True
-                case "motd": self.motd_duplicates = True
-                case "favicon": self.favicon_duplicate = True
+            self.flags_dict[key] = True
+
 
 class JavaServerSv(ServerSv):
     server: JavaServer
@@ -75,7 +66,7 @@ class JavaServerSv(ServerSv):
             raise Exception(f"DNS ISSUE. LOOKUP FAILED FOR IP {ip}.")
         CumulativeTimers.get_timer("Lookup").end_time(table_name)
 
-        self.flags = JavaServerFlags(table_name)
+        # db init
         self.insert_query = JavaQueries.get_insert_query(table_name)
         DBQUEUES.db_queue_java.add_important_instruction(JavaQueries.get_create_table_query(table_name))
 
@@ -85,6 +76,14 @@ class JavaServerSv(ServerSv):
             DBINSTANCES.java_instance.cursor, table_name, ServerType.JAVA
         )
         CumulativeTimers.get_timer("Previous value").end_time(table_name)
+
+        # flag dbs init + get last values from other tables if needed & load cache
+        self.flags = JavaServerFlags(table_name)
+        for key, enabled in self.flags.flags_dict.items():
+            if not enabled: continue
+            DBQUEUES.db_queue_duplicates_java.add_important_instruction(
+                JavaDuplicateQueries.get_create_table_query(table_name, key)
+            )
 
         if Startup.SHOULD_PERFORM_STARTUP_CHECKS:
             run_startup_checks(table_name)
