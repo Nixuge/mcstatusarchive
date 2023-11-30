@@ -114,7 +114,6 @@ class JavaServerSv(ServerSv):
         return status
 
     def get_values_dict(self, status: PingResponse) -> dict:
-        # TODO: HANDLE CACHE HERE
         # TODO (maybe, check ram usage): check to objects instead of dicts for values
         return {
             "save_time": int(time()),

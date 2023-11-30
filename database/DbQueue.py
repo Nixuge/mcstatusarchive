@@ -51,7 +51,6 @@ class DbQueue(Thread):
                 instruction = self.instructions.pop(0)
                 # count += 1
                 if instruction[1] != None: # if data present
-                    print(instruction[0], instruction[1])
                     self.cursor.execute(instruction[0], instruction[1])
                 else:
                     self.cursor.execute(instruction[0])

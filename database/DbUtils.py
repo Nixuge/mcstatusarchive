@@ -19,10 +19,10 @@ class DbUtils:
         return ordered_args
 
     @staticmethod
-    def _table_exists(cursor: Cursor, table_name: str):
+    def _table_exists(cursor: Cursor, table_name: str, column: str = "save_time"):
         # kinda dirty but needed to avoid all errors
         try:
-            cursor.execute(f"""SELECT save_time FROM {table_name} ORDER BY save_time DESC LIMIT 1;""")
+            cursor.execute(f"""SELECT {column} FROM {table_name} ORDER BY {column} DESC LIMIT 1;""")
             return True
         except OperationalError:
             return False

@@ -28,19 +28,19 @@ class JavaDuplicatesHelper:
             if not enabled: continue
             self.values[key] = []
 
-            table_name = f"{self.flags.parent_table_name}_duplicates_{key}"
+            table_name = JavaDuplicateQueries.get_duplicate_table_name(self.flags.parent_table_name, key)
 
-            if not DbUtils._table_exists(DBINSTANCES.java_duplicates_instance.cursor, table_name):
+            if not DbUtils._table_exists(DBINSTANCES.java_duplicates_instance.cursor, table_name, "id"):
                 continue
             
             results = DBINSTANCES.java_duplicates_instance.cursor.execute(
-                f"""SELECT {key} FROM {table_name} WHERE {key} IS NOT NULL ORDER BY id DESC;""").fetchall()
-
+                f"""SELECT * FROM {table_name} WHERE {key} IS NOT NULL ORDER BY id DESC;""").fetchall()
+            
             # last id should be equal to len(results) - 1
             # -> if not there's a missmatch & abort to avoid saving potentially wrong data.
-            last_id = results[-1][0]
+            last_id = results[0][0]
             lenR = len(results)
-            if lenR != (last_id - 1):
+            if (lenR - 1) != last_id:
                 logging.critical(f"ID MISSMATCH WHILE GRABBING DUPLICATES FOR TABLE {table_name}")
                 # todo: exit critical error
             
@@ -61,7 +61,7 @@ class JavaDuplicatesHelper:
             duplicate_id = last_data_ids.get(key)
             if duplicate_id == None: continue
 
-            table_name = f"{self.flags.parent_table_name}_duplicates_{key}"
+            table_name = JavaDuplicateQueries.get_duplicate_table_name(self.flags.parent_table_name, key)
 
             if not DbUtils._table_exists(DBINSTANCES.java_duplicates_instance.cursor, table_name):
                 continue
