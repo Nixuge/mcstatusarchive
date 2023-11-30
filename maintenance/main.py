@@ -1,29 +1,47 @@
+import logging
 from database.DbQueries import GlobalQueries
 from maintenance.checks import run_db_checks
+from maintenance.migrator import process_column
 from vars.DbInstances import DBINSTANCES
-from vars.DbQueues import DBQUEUES
 from vars.ExceptedKeys import JAVA_EXCEPTED_KEYS
 
+AUTO_RUN = True
 
 def maintenance_main():
-    DBQUEUES.db_queue_java.start()
-    DBQUEUES.db_queue_duplicates_java.start()
     print("Maintenance tool for mcstatusarchive's DB.")
     print("Running basic DB checks")
-    db_name = "Play_KingdomsMineMC_Net"
-    columns_to_check = get_default_types_columns(db_name)
-    print(f"columns to check: {columns_to_check}")
-    data = run_db_checks(db_name, columns_to_check)
-    print(f"Got data: {data}")
+    # db_name = "Play_KingdomsMineMC_Net"
+    # columns_to_check = get_default_types_columns(db_name)
+    # data = run_db_checks(db_name, columns_to_check)
+    # print(f"Table {db_name}, got data: {data}")
 
-# Basically columns where it's possible to do maintenance
-def get_default_types_columns(table_name: str):
-    final = []
-    columns = DBINSTANCES.java_instance.cursor.execute(GlobalQueries.get_table_info(table_name)).fetchall()
+    # for column in data["duplicates"]:
+    #     if AUTO_RUN or input(f"Migrate db column {column} for server {db_name}? ") in ["y", "yes", "o"]:
+    #         process_column(db_name, column)
+    run_all_tables()
 
-    for key, column_type in columns:
-        if key not in JAVA_EXCEPTED_KEYS.keys() or column_type != JAVA_EXCEPTED_KEYS[key]: 
-            continue
-        final.append(key)
+def run_table(table_name: str):
+    data = run_db_checks(table_name)
+    if len(data["duplicates"]) == 0 and len(data["nonnull"]) == 0:
+        logging.error(f"Skipped table {table_name}")
+        return
+    logging.critical(f"Table {table_name}, got data: {data}")
 
-    return final
+    for column in data["duplicates"]:
+        if AUTO_RUN or input(f"Migrate db column {column} for server {table_name}? ") in ["y", "yes", "o"]:
+            process_column(table_name, column)
+    
+    logging.critical("Done with table.")
+
+def run_all_tables():
+    # initial_size = 
+    tables = [x[0] for x in DBINSTANCES.java_instance.cursor.execute("SELECT name FROM sqlite_master WHERE type='table';").fetchall()]
+    # print(tables)
+    for table in tables:
+        run_table(table)
+    
+    logging.info("Vacuuming...")
+    DBINSTANCES.java_instance.cursor.execute("VACUUM;")
+    DBINSTANCES.java_instance.connection.commit()
+    logging.info("Vacuumed.")
+

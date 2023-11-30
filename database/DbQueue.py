@@ -36,7 +36,7 @@ class DbQueue(Thread):
         try:
             while len(self.important_instructions) > 0:
                 instruction = self.important_instructions.pop(0)
-                self.cursor.execute(instruction)
+                # self.cursor.execute(instruction)
                 
             self.connection.commit()
             # self.connection.serialize()
@@ -51,6 +51,7 @@ class DbQueue(Thread):
                 instruction = self.instructions.pop(0)
                 # count += 1
                 if instruction[1] != None: # if data present
+                    print(instruction[0], instruction[1])
                     self.cursor.execute(instruction[0], instruction[1])
                 else:
                     self.cursor.execute(instruction[0])

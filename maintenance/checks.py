@@ -1,19 +1,27 @@
 import logging
+from database.DbQueries import GlobalQueries
 from utils.timer import CumulativeTimers
 from vars.DbInstances import DBINSTANCES
+from vars.ExceptedKeys import JAVA_EXCEPTED_KEYS, JAVA_KEYS_ORDER
 
-keys = {
-    "favicon": 8,
-    "motd": 7,
-    "players_sample": 4,
-    "version_name": 6
-}
+# Basically columns where it's possible to do maintenance
+def get_default_types_columns(table_name: str):
+    final = []
+    columns = DBINSTANCES.java_instance.cursor.execute(GlobalQueries.get_table_info(table_name)).fetchall()
+
+    for key, column_type in columns:
+        if key not in JAVA_EXCEPTED_KEYS.keys() or column_type != JAVA_EXCEPTED_KEYS[key]: 
+            continue
+        final.append(key)
+
+    return final
 
 # columns_to_check:
 # if None, continue w all columns
 # if empty list, do nothing
 # otherwise do for valus in it
-def run_db_checks(table_name: str, columns_to_check: list[str] | None = None):
+def run_db_checks(table_name: str):
+    columns_to_check = get_default_types_columns(table_name)
     results = {"duplicates": [], "nonnull": []}
 
     if columns_to_check == []:
@@ -23,7 +31,7 @@ def run_db_checks(table_name: str, columns_to_check: list[str] | None = None):
     CumulativeTimers.get_timer("Startup check").start_time(table_name)
     count = cursor.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
 
-    for key, index in keys.items():
+    for key, index in JAVA_KEYS_ORDER.items():
         if columns_to_check and key not in columns_to_check: continue
         test_query = f"SELECT * FROM {table_name} WHERE {key} IS NOT NULL;"
         test_data = [x[index] for x in cursor.execute(test_query).fetchall()]

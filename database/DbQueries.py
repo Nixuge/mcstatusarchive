@@ -51,6 +51,10 @@ class JavaQueries:
 
 class JavaDuplicateQueries:
     @staticmethod
+    def get_duplicate_table_name(name: str, key: str) -> str:
+        return f"{name}_duplicates_{key}"
+
+    @staticmethod
     def get_create_table_query(name: str, key: str) -> str:
         return f"""CREATE TABLE IF NOT EXISTS {name}_duplicates_{key} (
                     id INT NOT NULL,
