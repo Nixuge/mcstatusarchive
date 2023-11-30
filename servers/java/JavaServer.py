@@ -7,23 +7,20 @@ import dns.resolver
 from mcstatus import JavaServer
 from mcstatus.pinger import PingResponse
 from mcstatus.status_response import JavaStatusPlayer
-from database.DbQueries import JavaDuplicateQueries, JavaQueries
+from database.DbQueries import JavaQueries
+from maintenance.checks import run_db_checks
 
 from servers.Server import ServerSv
 
 from database.DbUtils import ServerType, DbUtils
 from servers.java.JavaDuplicatesHelper import JavaDuplicatesHelper
 from servers.java.JavaServerFlags import JavaServerFlags
-from utils.start.startupchecks import run_startup_checks
 from utils.timer import CumulativeTimers
 from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
 from vars.Errors import ERRORS, ErrorHandler
 from vars.Frontend import FRONTEND_UPDATE_THREAD
 from vars.config import Startup, Timings
-
-
-
 
 
 class JavaServerSv(ServerSv):
@@ -74,7 +71,7 @@ class JavaServerSv(ServerSv):
         CumulativeTimers.get_timer("Previous value").end_time(table_name)
 
         if Startup.SHOULD_PERFORM_STARTUP_CHECKS:
-            run_startup_checks(table_name)
+            run_db_checks(table_name)
 
     async def save_status(self):
         status = await self._perform_status()

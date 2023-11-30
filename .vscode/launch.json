@@ -9,6 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "main.py",
+            "args": ["maintenance"],
             "console": "integratedTerminal",
             "justMyCode": true
         }

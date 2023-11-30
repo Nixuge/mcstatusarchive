@@ -9,19 +9,29 @@ keys = {
     "version_name": 6
 }
 
-def run_startup_checks(table_name: str):
+# columns_to_check:
+# if None, continue w all columns
+# if empty list, do nothing
+# otherwise do for valus in it
+def run_db_checks(table_name: str, columns_to_check: list[str] | None = None):
+    results = {"duplicates": [], "nonnull": []}
+
+    if columns_to_check == []:
+        return results
+
     cursor = DBINSTANCES.java_instance.cursor
     CumulativeTimers.get_timer("Startup check").start_time(table_name)
     count = cursor.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
 
     for key, index in keys.items():
+        if columns_to_check and key not in columns_to_check: continue
         test_query = f"SELECT * FROM {table_name} WHERE {key} IS NOT NULL;"
         test_data = [x[index] for x in cursor.execute(test_query).fetchall()]
         len_duplicates = len(test_data)
         len_nodupe = len(set(test_data))
 
         if len_duplicates < 100:
-            return # not enough data to process
+            continue # not enough data to process
         
         if len_duplicates == 0:
             nonnull_ratio = 0
@@ -35,13 +45,17 @@ def run_startup_checks(table_name: str):
         
         if key == "players_sample":
             if duplicate_ratio > 10:
+                results["duplicates"].append(key)
                 warn_high_duplicates(table_name, key, duplicate_ratio, len_duplicates)
         elif nonnull_ratio > 10:
             if duplicate_ratio > 10:
+                results["duplicates"].append(key)
                 warn_high_duplicates(table_name, key, duplicate_ratio, len_duplicates)
             else:
+                results["nonnull"].append(key)
                 warn_high_nonnull(table_name, key, nonnull_ratio, duplicate_ratio)
 
+    return results
 
 def warn_high_nonnull(table_name: str, key: str, percentage: float, percentage_duplicate: float):
     logging.warn(f"High number of non null unique keys for {table_name} ({key}): {percentage}% ({percentage_duplicate}% duplicate)")
