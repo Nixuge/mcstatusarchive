@@ -86,6 +86,7 @@ class JavaDuplicatesHelper:
     # returns id if duplicate flag for key enabled
     # else returns the value itself
     def get_value_for_save(self, key: str, grabbed_value: Any):
+        if grabbed_value == None: return None
         flag = self.flags.get(key)
         if not flag: return grabbed_value
         try:
