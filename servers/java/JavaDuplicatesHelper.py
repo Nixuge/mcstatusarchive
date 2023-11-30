@@ -52,9 +52,10 @@ class JavaDuplicatesHelper:
 
     # to pass int: last_data from get_previous_values_from_db.
     # This makes it so that it grabs the needed items.
+    # Note: mutates the initial dict
     def get_latest_values(self, last_data_ids: dict) -> dict:
         # Partially yoinked from DbUtils
-        last_data_full = {}
+        last_data_full = last_data_ids
         for key, enabled in self.flags.flags_dict.items():
             if not enabled: continue
             duplicate_id = last_data_ids.get(key)

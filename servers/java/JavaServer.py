@@ -84,8 +84,14 @@ class JavaServerSv(ServerSv):
         data = self.update_values(data)  # only keep changed ones
         FRONTEND_UPDATE_THREAD.add_update(self.table_name, data)
 
-        data_list = DbUtils.get_args_in_order_from_dict(data, ServerType.JAVA)
-        DBQUEUES.db_queue_java.add_instuction(self.insert_query, data_list)
+        data_duplicate_ids = {}
+        for key, value in data.items():
+            data_duplicate_ids[key] = self.duplicates_helper.get_value_for_save(key, value)
+
+        DBQUEUES.db_queue_java.add_instuction(
+            self.insert_query, 
+            DbUtils.get_args_in_order_from_dict(data_duplicate_ids, ServerType.JAVA)
+        )
         logging.getLogger("root").debug(f"Done grabbing {self.ip} !")
 
     async def _perform_status(self):

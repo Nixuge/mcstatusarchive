@@ -20,8 +20,6 @@ class JavaServerFlags:
             self.flags_dict[key] = True
 
         self._create_dbs()
-        self.flags_dict["version_name"] = False
-        self.flags_dict["motd"] = False
 
         self.__curr = 0
         self.__term = len(self.flags_dict)
@@ -35,7 +33,7 @@ class JavaServerFlags:
             )
 
     def get(self, key: str):
-        return self.flags_dict.get(key)
+        return self.flags_dict.get(key, False)
 
     def __iter__(self):
         return self
