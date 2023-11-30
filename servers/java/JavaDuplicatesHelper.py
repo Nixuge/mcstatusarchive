@@ -1,15 +1,18 @@
 # TODO
-# - cache existing values
-# - warn when too many caches values
-# - get if value exists
-# - save to db when new one gets added
-# - get id from text
+# - cache existing values -> done
+# - warn when too many caches values -> done
+# - get if value exists -> done
+# - save to db when new one gets added -> done
+# - get id from text -> done
 # etc etc...
 
 import logging
+from typing import Any
+from database.DbQueries import JavaDuplicateQueries
 from database.DbUtils import DbUtils
 from servers.java.JavaServerFlags import JavaServerFlags
 from vars.DbInstances import DBINSTANCES
+from vars.DbQueues import DBQUEUES
 
 
 class JavaDuplicatesHelper:
@@ -36,12 +39,16 @@ class JavaDuplicatesHelper:
             # last id should be equal to len(results) - 1
             # -> if not there's a missmatch & abort to avoid saving potentially wrong data.
             last_id = results[-1][0]
-            if len(results != (last_id - 1)):
+            lenR = len(results)
+            if lenR != (last_id - 1):
                 logging.critical(f"ID MISSMATCH WHILE GRABBING DUPLICATES FOR TABLE {table_name}")
+                # todo: exit critical error
+            
+            if lenR > 500:
+                logging.warn(f"High count of elements in duplicates list for table {table_name}")
 
             for result in results:
                 self.values[key].append(result[1])
-
 
     # to pass int: last_data from get_previous_values_from_db.
     # This makes it so that it grabs the needed items.
@@ -68,4 +75,20 @@ class JavaDuplicatesHelper:
 
         return last_data_full
 
-    
+    def _add_index(self, key: str, value: Any):
+        self.values[key].append(value)
+        DBQUEUES.db_queue_duplicates_java.add_instuction(
+            JavaDuplicateQueries.get_insert_query(self.flags.parent_table_name, key),
+            [len(self.values[key]) - 1, value]
+        )
+
+    # returns id if duplicate flag for key enabled
+    # else returns the value itself
+    def get_value_for_save(self, key: str, grabbed_value: Any):
+        flag = self.flags.get(key)
+        if not flag: return grabbed_value
+        try:
+            return self.values[key].index(grabbed_value)
+        except ValueError:
+            self._add_index(key, grabbed_value)
+            return len(self.values[key]) - 1

@@ -26,9 +26,6 @@ class JavaServerFlags:
         self.__curr = 0
         self.__term = len(self.flags_dict)
 
-        print(self.__curr)
-        print(self.__term)
-
     def _create_dbs(self):
         for key, enabled in self.flags_dict.items():
             if not enabled: 
@@ -37,6 +34,8 @@ class JavaServerFlags:
                 JavaDuplicateQueries.get_create_table_query(self.parent_table_name, key)
             )
 
+    def get(self, key: str):
+        return self.flags_dict.get(key)
 
     def __iter__(self):
         return self
