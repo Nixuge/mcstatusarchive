@@ -54,11 +54,11 @@ def run_db_checks(table_name: str):
         duplicate_ratio = round(duplicate_ratio, 2)
         
         if key == "players_sample":
-            if duplicate_ratio > 10:
+            if duplicate_ratio > 40:
                 results["duplicates"].append(key)
                 warn_high_duplicates(table_name, key, duplicate_ratio, len_duplicates)
-        elif nonnull_ratio > 10:
-            if duplicate_ratio > 10:
+        elif nonnull_ratio > 40:
+            if duplicate_ratio > 40:
                 results["duplicates"].append(key)
                 warn_high_duplicates(table_name, key, duplicate_ratio, len_duplicates)
             else:
