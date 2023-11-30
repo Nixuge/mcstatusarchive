@@ -12,6 +12,7 @@ from database.DbQueries import JavaDuplicateQueries, JavaQueries
 from servers.Server import ServerSv
 
 from database.DbUtils import ServerType, DbUtils
+from servers.java.JavaDuplicatesHelper import JavaDuplicatesHelper
 from servers.java.JavaServerFlags import JavaServerFlags
 from utils.start.startupchecks import run_startup_checks
 from utils.timer import CumulativeTimers
@@ -30,6 +31,7 @@ class JavaServerSv(ServerSv):
     table_name: str
     insert_query: str
     flags: JavaServerFlags
+    duplicates_helper: JavaDuplicatesHelper
 
     async def __init__(self, table_name: str, ip: str, port: int = 25565) -> None:
         # inheriting
@@ -59,49 +61,24 @@ class JavaServerSv(ServerSv):
         self.insert_query = JavaQueries.get_insert_query(table_name)
         DBQUEUES.db_queue_java.add_important_instruction(JavaQueries.get_create_table_query(table_name))
 
+        # flag dbs init
+        self.flags = JavaServerFlags(table_name)
+        self.duplicates_helper = JavaDuplicatesHelper(self.flags)
+
         # load last values from db (if any)
         CumulativeTimers.get_timer("Previous value").start_time(table_name)
-        self.values = DbUtils.get_previous_values_from_db(
+        values_ids = DbUtils.get_previous_values_from_db(
             DBINSTANCES.java_instance.cursor, table_name, ServerType.JAVA
         )
+        self.values = self.duplicates_helper.get_latest_values(values_ids)
         CumulativeTimers.get_timer("Previous value").end_time(table_name)
-
-        # flag dbs init + get last values from other tables if needed & load cache
-        self.flags = JavaServerFlags(table_name)
-        for key, enabled in self.flags.flags_dict.items():
-            if not enabled: continue
-            DBQUEUES.db_queue_duplicates_java.add_important_instruction(
-                JavaDuplicateQueries.get_create_table_query(table_name, key)
-            )
 
         if Startup.SHOULD_PERFORM_STARTUP_CHECKS:
             run_startup_checks(table_name)
 
     async def save_status(self):
-        # logging.debug(f"Starting to grab {self.ip}.")
-        try:
-            async with asyncio.timeout(Timings.SERVER_TIMEOUT):
-                # version = mc version for the ping.
-                # Default is 47 (1.8 -> 1.8.9)
-                # Set it to 764 (1.20.2, currently latest)
-                # Should still be able to ping old clients, 
-                # While showing new fancy hex colors on servers that support it
-                status = await self.server.async_status(version=764) 
-                # TODO: EXPERIMENT & IMPLEMENT W QUERY LOOKUP.
-                # CAN GET SERVER PLUGINS, BRAND & SOME OTHER DATA.
-                # query = await self.server.async_query()
-        except TimeoutError:
-            logging.warn(f"ERRORSPLIT{self.ip}: {ERRORS.get('Timeout')}")
-            return
-        except Exception as e:
-            e = str(e)
-            if "[Errno 111]" in e:
-                formated_error = ERRORS.get("ConnectCallFailed")
-            else:
-                formated_error = ERRORS.get(e, 'Unknown error happened ' + e)
-
-            logging.warn(f"ERRORSPLIT{self.ip}: {formated_error}")
-            return
+        status = await self._perform_status()
+        if status == None: return
 
         data = self.get_values_dict(status)
         data = self.update_values(data)  # only keep changed ones
@@ -111,7 +88,31 @@ class JavaServerSv(ServerSv):
         DBQUEUES.db_queue_java.add_instuction(self.insert_query, data_list)
         logging.getLogger("root").debug(f"Done grabbing {self.ip} !")
 
+    async def _perform_status(self):
+        # logging.debug(f"Starting to grab {self.ip}.")
+        try:
+            async with asyncio.timeout(Timings.SERVER_TIMEOUT):
+                # version = mc version for the ping.
+                # Default is 47 (1.8 -> 1.8.9)
+                # Set it to 764 (1.20.2, currently latest)
+                # Should still be able to ping old clients, 
+                # While showing new fancy hex colors on servers that support it
+                status = await self.server.async_status(version=764) 
+        except TimeoutError:
+            logging.warn(f"ERRORSPLIT{self.ip}: {ERRORS.get('Timeout')}")
+            return
+        except Exception as e:
+            e = str(e)
+            if "[Errno 111]" in e: formated_error = ERRORS.get("ConnectCallFailed")
+            else: formated_error = ERRORS.get(e, 'Unknown error happened ' + e)
+            logging.warn(f"ERRORSPLIT{self.ip}: {formated_error}")
+            return
+        
+        return status
+
     def get_values_dict(self, status: PingResponse) -> dict:
+        # TODO: HANDLE CACHE HERE
+        # TODO (maybe, check ram usage): check to objects instead of dicts for values
         return {
             "save_time": int(time()),
             "players_on": status.players.online,
