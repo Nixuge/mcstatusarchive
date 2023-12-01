@@ -6,6 +6,16 @@ from utils.logger import get_proper_logger
 DEBUG_LOG = False
 logger = get_proper_logger(logging.getLogger("root"), DEBUG_LOG)
 
+# Rudimentary check.
+# Will see for smth more complicated later
+import sys
+if len(sys.argv) > 1:
+    if sys.argv[1] == "maintenance":
+        from maintenance.main import maintenance_main
+        maintenance_main()
+        exit(0)
+
+
 import os
 import signal
 from utils.timer import Timer
@@ -17,8 +27,8 @@ import asyncio
 from asyncio import Task
 from time import time
 from typing import Coroutine
-from servers.BedrockServer import BedrockServerSv
-from servers.JavaServer import JavaServerSv
+from servers.bedrock.BedrockServer import BedrockServerSv
+from servers.java.JavaServer import JavaServerSv
 from servers.ServersLoader import ServersLoader
 from vars.config import Timings
 from vars.DbQueues import DBQUEUES
@@ -83,6 +93,7 @@ async def main():
     timer = Timer()
     
     DBQUEUES.db_queue_java.start()
+    DBQUEUES.db_queue_duplicates_java.start()
     DBQUEUES.db_queue_bedrock.start()
 
     logging.info(f"Databases loaded. ({timer.step()})")

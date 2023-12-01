@@ -8,11 +8,13 @@ from mcstatus import JavaServer
 from mcstatus.pinger import PingResponse
 from mcstatus.status_response import JavaStatusPlayer
 from database.DbQueries import JavaQueries
+from maintenance.checks import run_db_checks
 
 from servers.Server import ServerSv
 
 from database.DbUtils import ServerType, DbUtils
-from utils.start.startupchecks import run_startup_checks
+from servers.java.JavaDuplicatesHelper import JavaDuplicatesHelper
+from servers.java.JavaServerFlags import JavaServerFlags
 from utils.timer import CumulativeTimers
 from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
@@ -20,10 +22,13 @@ from vars.Errors import ERRORS, ErrorHandler
 from vars.Frontend import FRONTEND_UPDATE_THREAD
 from vars.config import Startup, Timings
 
+
 class JavaServerSv(ServerSv):
     server: JavaServer
     table_name: str
     insert_query: str
+    flags: JavaServerFlags
+    duplicates_helper: JavaDuplicatesHelper
 
     async def __init__(self, table_name: str, ip: str, port: int = 25565) -> None:
         # inheriting
@@ -49,23 +54,44 @@ class JavaServerSv(ServerSv):
             raise Exception(f"DNS ISSUE. LOOKUP FAILED FOR IP {ip}.")
         CumulativeTimers.get_timer("Lookup").end_time(table_name)
 
+        # db init
         self.insert_query = JavaQueries.get_insert_query(table_name)
-        # create db if not present
-        DBQUEUES.db_queue_java.add_important_instruction(
-            JavaQueries.get_create_table_query(table_name)
-        )
+        DBQUEUES.db_queue_java.add_important_instruction(JavaQueries.get_create_table_query(table_name))
+
+        # flag dbs init
+        self.flags = JavaServerFlags(table_name)
+        self.duplicates_helper = JavaDuplicatesHelper(self.flags)
 
         # load last values from db (if any)
         CumulativeTimers.get_timer("Previous value").start_time(table_name)
-        self.values = DbUtils.get_previous_values_from_db(
+        values_ids = DbUtils.get_previous_values_from_db(
             DBINSTANCES.java_instance.cursor, table_name, ServerType.JAVA
         )
+        self.values = self.duplicates_helper.get_latest_values(values_ids)
         CumulativeTimers.get_timer("Previous value").end_time(table_name)
 
         if Startup.SHOULD_PERFORM_STARTUP_CHECKS:
-            run_startup_checks(table_name)
+            run_db_checks(table_name)
 
     async def save_status(self):
+        status = await self._perform_status()
+        if status == None: return
+
+        data = self.get_values_dict(status)
+        data = self.update_values(data)  # only keep changed ones
+        FRONTEND_UPDATE_THREAD.add_update(self.table_name, data)
+
+        data_duplicate_ids = {}
+        for key, value in data.items():
+            data_duplicate_ids[key] = self.duplicates_helper.get_value_for_save(key, value)
+
+        DBQUEUES.db_queue_java.add_instuction(
+            self.insert_query, 
+            DbUtils.get_args_in_order_from_dict(data_duplicate_ids, ServerType.JAVA)
+        )
+        logging.getLogger("root").debug(f"Done grabbing {self.ip} !")
+
+    async def _perform_status(self):
         # logging.debug(f"Starting to grab {self.ip}.")
         try:
             async with asyncio.timeout(Timings.SERVER_TIMEOUT):
@@ -75,31 +101,20 @@ class JavaServerSv(ServerSv):
                 # Should still be able to ping old clients, 
                 # While showing new fancy hex colors on servers that support it
                 status = await self.server.async_status(version=764) 
-                # TODO: EXPERIMENT & IMPLEMENT W QUERY LOOKUP.
-                # CAN GET SERVER PLUGINS, BRAND & SOME OTHER DATA.
-                # query = await self.server.async_query()
         except TimeoutError:
             logging.warn(f"ERRORSPLIT{self.ip}: {ERRORS.get('Timeout')}")
             return
         except Exception as e:
             e = str(e)
-            if "[Errno 111]" in e:
-                formated_error = ERRORS.get("ConnectCallFailed")
-            else:
-                formated_error = ERRORS.get(e, 'Unknown error happened ' + e)
-
+            if "[Errno 111]" in e: formated_error = ERRORS.get("ConnectCallFailed")
+            else: formated_error = ERRORS.get(e, 'Unknown error happened ' + e)
             logging.warn(f"ERRORSPLIT{self.ip}: {formated_error}")
             return
-
-        data = self.get_values_dict(status)
-        data = self.update_values(data)  # only keep changed ones
-        FRONTEND_UPDATE_THREAD.add_update(self.table_name, data)
-
-        data_list = DbUtils.get_args_in_order_from_dict(data, ServerType.JAVA)
-        DBQUEUES.db_queue_java.add_instuction(self.insert_query, data_list)
-        logging.getLogger("root").debug(f"Done grabbing {self.ip} !")
+        
+        return status
 
     def get_values_dict(self, status: PingResponse) -> dict:
+        # TODO (maybe, check ram usage): check to objects instead of dicts for values
         return {
             "save_time": int(time()),
             "players_on": status.players.online,
