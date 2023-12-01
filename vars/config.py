@@ -43,7 +43,7 @@ Configurator.init()
 # ~ too many changes (non duplicate) in those columns -> change to gzipped data
 # ~ too many failed connections (socket, timeout, etc)
 class Startup:
-    SHOULD_PERFORM_STARTUP_CHECKS = Configurator.get_value("should_perform_startup_checks", True)
+    SHOULD_PERFORM_STARTUP_CHECKS = Configurator.get_value("should_perform_startup_checks", False)
 
 class Timings:
     SERVER_TIMEOUT = Configurator.get_value("server_timeout", 25)
