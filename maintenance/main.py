@@ -27,7 +27,8 @@ def maintenance_main():
 
 def run_table(table_name: str, table_index: int):
     data = run_db_checks(table_name)
-    if len(data["duplicates"]) == 0 and len(data["nonnull"]) == 0:
+    # if len(data["duplicates"]) == 0 and len(data["nonnull"]) == 0:
+    if len(data["duplicates"]) == 0: # nonnull check not implemented yet, pointless
         logging.warn(f"Skipped table {table_name}")
         return
     logging.critical(f"Table {table_name}, got data: {data}")
@@ -58,11 +59,12 @@ def run_all_tables():
 
     logging.info(f"Getting duplicates done ({timer.end()})")    
     
-    timer = Timer()
-    logging.info("Vacuuming...")
-    DBINSTANCES.java_instance.cursor.execute("VACUUM;")
-    DBINSTANCES.java_instance.connection.commit()
-    logging.info(f"Vacuumed. ({timer.end()})")
+    if input("Vacuum? ") in ["y", "yes", "o"]:
+        timer = Timer()
+        logging.info("Vacuuming...")
+        DBINSTANCES.java_instance.cursor.execute("VACUUM;")
+        DBINSTANCES.java_instance.connection.commit()
+        logging.info(f"Vacuumed. ({timer.end()})")
 
     logging.info(f"Initial size: {initial_size}")
     logging.info(f"New size (main DB): {get_as_kb_mb(os.stat('z_java_servers.db').st_size)}")

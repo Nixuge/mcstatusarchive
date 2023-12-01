@@ -11,6 +11,10 @@ class JavaServerFlags:
         self.parent_table_name = table_name
         self.flags_dict = {}
 
+        # Define __term early, otherwise may crash if returning before end
+        self.__curr = 0
+        self.__term = 0
+
         exists = bool(DBINSTANCES.java_instance.cursor.execute(GlobalQueries.already_exists(table_name)).fetchone()[0])
         if not exists:
             return
@@ -21,7 +25,7 @@ class JavaServerFlags:
 
         self._create_dbs()
 
-        self.__curr = 0
+
         self.__term = len(self.flags_dict)
 
     def _create_dbs(self):
