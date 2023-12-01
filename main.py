@@ -57,7 +57,7 @@ async def run_batch_raw(servers: list[JavaServerSv | BedrockServerSv]):
     logging.info("== Done with batch ==")
 
 
-async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], task_limit: int = 50):
+async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], task_limit: int = 75):
     logging.info("== Starting batch ==")
     timer = Timer()
 
