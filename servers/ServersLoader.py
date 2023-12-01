@@ -2,9 +2,9 @@ import asyncio
 import json
 import logging
 from typing import Coroutine
-from servers.BedrockServer import BedrockServerSv
+from servers.bedrock.BedrockServer import BedrockServerSv
 
-from servers.JavaServer import JavaServerSv
+from servers.java.JavaServer import JavaServerSv
 from utils.timer import CumulativeTimers
 
 
