@@ -71,7 +71,7 @@ def run_all_tables():
 
 def get_as_kb_mb(bytes: int, decimals: int = 2):
     if bytes >= 1_000_000_000:
-        return f"{round(bytes / 1_000_000, decimals)}GB"
+        return f"{round(bytes / 1_000_000_000, decimals)}GB"
     if bytes >= 1_000_000:
         return f"{round(bytes / 1_000_000, decimals)}MB"
     if bytes > 1_000:

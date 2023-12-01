@@ -16,11 +16,13 @@ ERRORS = {
 class ErrorHandler:
     _error_file_path = "/home/nix/"
     _actions = {
-        "dbimportant": ["log_critical", "error_file","traceback",  "traceback_file", "exit_all", "exit_thread"],
-        "dbnormal": ["log_critical", "error_file","traceback",  "traceback_file", "exit_all", "exit_thread"],
-        "frontend": ["log_error", "error_file", "exit_thread"],
+        "dbimportant": ["log_critical", "error_file", "traceback", "traceback_file", "exit_all", "exit_thread"],
+        "dbnormal": ["log_critical", "error_file", "traceback", "traceback_file", "exit_all", "exit_thread"],
+        "frontend": ["log_error", "exit_thread"],
         "motd_parse_type": ["log_error", "error_file"],
-        "motd_json_dumps": ["log_error", "error_file"]
+        "motd_json_dumps": ["log_error", "error_file"],
+        "config_badjson": ["log_error", "error_file", "traceback_file", "exit_all", "exit_thread"],
+        "save_status": ["log_error", "error_file", "traceback_file"]
     }
     _errors_counts = {}
     should_stop = False
