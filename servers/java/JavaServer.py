@@ -74,6 +74,12 @@ class JavaServerSv(ServerSv):
             run_db_checks(table_name)
 
     async def save_status(self):
+        try:
+            await self._save_status()
+        except:
+            ErrorHandler.add_error("save_status", {"table": self.table_name})
+
+    async def _save_status(self):
         status = await self._perform_status()
         if status == None: return
 
