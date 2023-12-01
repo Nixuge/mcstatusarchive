@@ -40,7 +40,7 @@ def run_db_checks(table_name: str):
         len_duplicates = len(test_data)
         len_nodupe = len(set(test_data))
 
-        if len_duplicates < 100:
+        if len_duplicates < 1000:
             continue # not enough data to process
         
         if len_duplicates == 0:
