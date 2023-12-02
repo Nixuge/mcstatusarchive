@@ -26,16 +26,15 @@ class InvalidServers:
             self.servers_fails_noncritical[server] = 1
             return 1
         
+        # otherwise if exists
         current_fails = self.servers_fails_noncritical[server]
         new_fails = current_fails + 1
-        if new_fails >= self.MARK_INVALID_AFTER: # exists & above invalid mark
+        if new_fails >= self.MARK_INVALID_AFTER: # above invalid mark
             self.invalid_servers.append(server)
             self.servers_fails_noncritical.pop(server)
-        else: # exists & below invalid mark
+        else: # below invalid mark
             self.servers_fails_noncritical[server] = new_fails
-
-            
-
+        return new_fails
 
 
 INVALID_JAVA_SERVERS = InvalidServers()

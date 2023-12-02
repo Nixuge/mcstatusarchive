@@ -20,6 +20,7 @@ from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
 from vars.Errors import ERRORS, ErrorHandler
 from vars.Frontend import FRONTEND_UPDATE_THREAD
+from vars.InvalidServers import INVALID_JAVA_SERVERS
 from vars.config import Startup, Timings
 
 
@@ -107,13 +108,16 @@ class JavaServerSv(ServerSv):
                 # Should still be able to ping old clients, 
                 # While showing new fancy hex colors on servers that support it
                 status = await self.server.async_status(version=764) 
-        except TimeoutError:
-            logging.warn(f"ERRORSPLIT{self.ip}: {ERRORS.get('Timeout')}")
-            return
+                INVALID_JAVA_SERVERS.mark_server_valid(self.ip)
         except Exception as e:
+            INVALID_JAVA_SERVERS.add_server_fail(self.ip)
+            if type(e) == TimeoutError:
+                return logging.warn(f"ERRORSPLIT{self.ip}: {ERRORS.get('Timeout')}")
             e = str(e)
-            if "[Errno 111]" in e: formated_error = ERRORS.get("ConnectCallFailed")
-            else: formated_error = ERRORS.get(e, 'Unknown error happened ' + e)
+            if "[Errno 111]" or "[Errno 113]"in e: # has dynamic data in it, can't catch w ERRORS.get()
+                formated_error = ERRORS.get("ConnectCallFailed") 
+            else: 
+                formated_error = ERRORS.get(e, 'Unknown error happened ' + e)
             logging.warn(f"ERRORSPLIT{self.ip}: {formated_error}")
             return
         
