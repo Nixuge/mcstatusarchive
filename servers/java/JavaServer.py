@@ -55,7 +55,8 @@ class JavaServerSv(ServerSv):
                 logging.error(f"Error happened looking up {ip}: {e} (try n°{tries})")
             tries += 1
         if not success:
-            raise Exception(f"DNS ISSUE. LOOKUP FAILED FOR IP {ip}.")
+            exitcode = ErrorHandler.add_error("dnslookup", {"server": self.ip, "port": self.port})
+            if exitcode > 0: exit(exitcode)
         CumulativeTimers.get_timer("Lookup").end_time(table_name)
 
         # db init

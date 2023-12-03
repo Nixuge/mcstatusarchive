@@ -23,7 +23,8 @@ class ErrorHandler:
         "motd_parse_type": ["log_error", "error_file"],
         "motd_json_dumps": ["log_error", "error_file"],
         "config_badjson": ["log_error", "error_file", "traceback_file", "exit_all", "exit_thread"],
-        "save_status": ["log_error", "error_file", "traceback_file"]
+        "save_status": ["log_error", "error_file", "traceback_file"],
+        "dnslookup": ["log_critical", "log_error", "error_file", "traceback", "traceback_file", "exit_all", "exit_thread"]
     }
     _errors_counts = {}
     should_stop = False
