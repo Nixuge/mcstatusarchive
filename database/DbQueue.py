@@ -8,18 +8,18 @@ from vars.Errors import  ErrorHandler
 
 
 class DbQueue(Thread):
-    # should be thread safe as lists are thread safe
-    #TODO: use queue (https://www.geeksforgeeks.org/queue-in-python/ ?)
+    file: str
     instructions: list[tuple[str, list | None]] #0 = query, 1 = data
     important_instructions: list[str]
     connection: Connection
     cursor: Cursor
 
     def __init__(self, db_manager: DbInstance) -> None:
-        super().__init__(None, None, "DbQueueThread") #see thread init (unneeded basically)
+        self.file = db_manager.db_file
+        super().__init__(None, None, f"DbQueueThread-{self.file}") #see thread init (unneeded basically)
         self.instructions = []
         self.important_instructions = []
-        self.connection = sqlite3.connect(db_manager.db_file, check_same_thread=False)
+        self.connection = sqlite3.connect(self.file, check_same_thread=False)
         self.cursor = self.connection.cursor()
     
     def add_important_instruction(self, full_query: str):
@@ -41,7 +41,7 @@ class DbQueue(Thread):
             self.connection.commit()
             # self.connection.serialize()
         except:
-            exit_code = ErrorHandler.add_error("dbimportant")
+            exit_code = ErrorHandler.add_error("dbimportant", {"file": self.file})
             if exit_code > 0: exit(exit_code)
 
     def _process_normal_instruction(self) -> None:

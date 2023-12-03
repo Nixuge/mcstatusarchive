@@ -131,6 +131,16 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 
-# IMPORTANT:
-# SWITCH FAVICONS FROM A BLOB TO A MD5 AND SAVE THE ICONS LOCALLY, 
-# AS SOME SERVERS (8B8T) ARE BLOATING THE DB BY CHANGING FAVICONS QUICKLY
+# IMPORTANT NOTE:
+# for absolutely NO REASON, this program is having issues,
+# BUT ONLY if starting from a non-vscode terminal.
+# - if starting on kitty or a service, i get "DNS lookup failed" errors, then for
+#   ABSOLUTELY NO REASON an "sqlite3.OperationalError: unable to open database file"
+#   errors, not even when connecting to the db but when executing something on the cursor
+#   on _process_important_instructions for z_java_servers.db
+# 
+# - if starting on vscode (even a screen through vscode), there is NOT A SINGLE ISSUE,
+#   some DNS lookups timeout 1x but do complete the 2nd try, and it starts up JUST FINE.
+# 
+# I do not have any idea why this is happening. It does not make any sense. That's just how it is.
+# This will not be running on a screen started through vscode instead of a service.
