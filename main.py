@@ -71,19 +71,20 @@ async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], try_inv
 
     running_tasks: list[Task] = []
 
-    to_add = []
-    for server in servers:
-        if type(server) == JavaServerSv:
-            if not INVALID_JAVA_SERVERS.is_invalid(server.ip):
-                to_add.append(server)
-            elif try_invalid: 
-                to_add.append(server)
-            # else:
-                # print(f"Skipped server: {server.ip}")
-        elif type(server) == BedrockServerSv:
-            to_add.append(server)
-    invalid_str = " (Trying invalid servers)" if try_invalid else ""
-    logging.info(f"Grabbing {len(to_add)}/{len(servers)} servers.{invalid_str}")
+    # to_add = []
+    # for server in servers:
+    #     if type(server) == JavaServerSv:
+    #         if not INVALID_JAVA_SERVERS.is_invalid(server.ip):
+    #             to_add.append(server)
+    #         elif try_invalid: 
+    #             to_add.append(server)
+    #         # else:
+    #             # print(f"Skipped server: {server.ip}")
+    #     elif type(server) == BedrockServerSv:
+    #         to_add.append(server)
+    # invalid_str = " (Trying invalid servers)" if try_invalid else ""
+    # logging.info(f"Grabbing {len(to_add)}/{len(servers)} servers.{invalid_str}")
+    to_add = list(servers)
 
     while True:
         for server in to_add:
