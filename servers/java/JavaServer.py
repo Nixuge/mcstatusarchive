@@ -22,6 +22,7 @@ from vars.Errors import ERRORS, ErrorHandler
 from vars.Frontend import FRONTEND_UPDATE_THREAD
 from vars.InvalidServers import INVALID_JAVA_SERVERS
 from vars.config import Startup, Timings
+from vars.counters import SAVED_SERVERS
 
 
 class JavaServerSv(ServerSv):
@@ -108,6 +109,7 @@ class JavaServerSv(ServerSv):
                 # While showing new fancy hex colors on servers that support it
                 status = await self.server.async_status(version=764) 
                 INVALID_JAVA_SERVERS.mark_server_valid(self.ip)
+                SAVED_SERVERS.value += 1
         except Exception as e:
             INVALID_JAVA_SERVERS.add_server_fail(self.ip)
             if INVALID_JAVA_SERVERS.is_invalid(self.ip): # do not log failed servers
