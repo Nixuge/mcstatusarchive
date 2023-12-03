@@ -44,7 +44,7 @@ class JavaServerSv(ServerSv):
         success = False
         while tries <= 3 and not success:
             try:
-                async with asyncio.timeout(Timings.SERVER_TIMEOUT):
+                async with asyncio.timeout(Timings.DNS_TIMEOUT):
                     self.server = await JavaServer.async_lookup(ip, port)
                     success = True
             except TimeoutError:
@@ -115,7 +115,7 @@ class JavaServerSv(ServerSv):
                 SAVED_SERVERS.value += 1
         except Exception as e:
             INVALID_JAVA_SERVERS.add_server_fail(self.ip)
-            if INVALID_JAVA_SERVERS.is_invalid(self.ip): # do not log failed servers
+            if not INVALID_JAVA_SERVERS.is_invalid(self.ip): # do not log failed servers
                 if type(e) == TimeoutError:
                     return logging.warn(f"ERRORSPLIT{self.ip}: {ERRORS.get('Timeout')}")
                 e = str(e)
