@@ -40,16 +40,19 @@ class JavaServerSv(ServerSv):
 
         # Trying without an errorhandler for now.
         CumulativeTimers.get_timer("Lookup").start_time(table_name)
-        tries = 0
+        tries = 1
         success = False
-        while tries < 3 and not success:
+        while tries <= 3 and not success:
             try:
-                self.server = await JavaServer.async_lookup(ip, port)
-                success = True
+                async with asyncio.timeout(Timings.SERVER_TIMEOUT):
+                    self.server = await JavaServer.async_lookup(ip, port)
+                    success = True
+            except TimeoutError:
+                logging.error(f"DNS lookup timeout for {ip} (try n°{tries})")
             except dns.resolver.NoNameservers: 
-                logging.error(f"DNS lookup failed for {ip} (try n{tries})")
+                logging.error(f"DNS lookup failed for {ip} (try n°{tries})")
             except Exception as e:
-                logging.error(f"Error happened looking up {ip}: {e} (try n{tries})")
+                logging.error(f"Error happened looking up {ip}: {e} (try n°{tries})")
             tries += 1
         if not success:
             raise Exception(f"DNS ISSUE. LOOKUP FAILED FOR IP {ip}.")
