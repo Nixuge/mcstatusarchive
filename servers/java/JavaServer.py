@@ -46,11 +46,10 @@ class JavaServerSv(ServerSv):
                 self.server = await JavaServer.async_lookup(ip, port)
                 success = True
             except dns.resolver.NoNameservers: 
-                tries += 1
                 logging.error(f"DNS lookup failed for {ip} (try n{tries})")
             except Exception as e:
-                tries += 1
                 logging.error(f"Error happened looking up {ip}: {e} (try n{tries})")
+            tries += 1
         if not success:
             raise Exception(f"DNS ISSUE. LOOKUP FAILED FOR IP {ip}.")
         CumulativeTimers.get_timer("Lookup").end_time(table_name)
