@@ -51,6 +51,7 @@ class JavaServerSv(ServerSv):
                 logging.error(f"DNS lookup timeout for {ip} (try n°{tries})")
             except dns.resolver.NoNameservers: 
                 logging.error(f"DNS lookup failed for {ip} (try n°{tries})")
+                await asyncio.sleep(5)
             except Exception as e:
                 logging.error(f"Error happened looking up {ip}: {e} (try n°{tries})")
             tries += 1
