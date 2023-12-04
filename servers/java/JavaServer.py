@@ -21,7 +21,7 @@ from vars.DbQueues import DBQUEUES
 from vars.Errors import ERRORS, ErrorHandler
 from vars.Frontend import FRONTEND_UPDATE_THREAD
 from vars.InvalidServers import INVALID_JAVA_SERVERS
-from vars.config import Startup, Timings
+from vars.config import Logging, Startup, Timings
 from vars.counters import SAVED_SERVERS
 
 
@@ -48,9 +48,11 @@ class JavaServerSv(ServerSv):
                     self.server = await JavaServer.async_lookup(ip, port)
                     success = True
             except TimeoutError:
-                logging.error(f"DNS lookup timeout for {ip} (try n°{tries})")
+                if Logging.LOG_DNS_TIMEOUT:
+                    logging.error(f"DNS lookup timeout for {ip} (try n°{tries})")
             except dns.resolver.NoNameservers: 
-                logging.error(f"DNS lookup failed for {ip} (try n°{tries})")
+                if Logging.LOG_DNS_ERROR:
+                    logging.error(f"DNS lookup failed for {ip} (try n°{tries})")
                 await asyncio.sleep(5)
             except Exception as e:
                 logging.error(f"Error happened looking up {ip}: {e} (try n°{tries})")

@@ -1,6 +1,5 @@
 import json
 import logging
-from typing import Type, TypeVar
 
 from vars.Errors import ErrorHandler
 class Configurator:
@@ -50,3 +49,6 @@ class Timings:
     SAVE_EVERY = Configurator.get_value("save_every", 60)
     DNS_TIMEOUT = Configurator.get_value("dns_timeout", 20)
 
+class Logging:
+    LOG_DNS_TIMEOUT = Configurator.get_value("log_dns_timeout", False)
+    LOG_DNS_ERROR = Configurator.get_value("log_dns_error", True)
