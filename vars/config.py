@@ -52,3 +52,5 @@ class Timings:
 class Logging:
     LOG_DNS_TIMEOUT = Configurator.get_value("log_dns_timeout", False)
     LOG_DNS_ERROR = Configurator.get_value("log_dns_error", True)
+    
+    LOG_HIGH_COUNT_DUPLICATE_TABLE = Configurator.get_value("log_high_count_duplicate_table", True)

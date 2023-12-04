@@ -13,6 +13,7 @@ from database.DbUtils import DbUtils
 from servers.java.JavaServerFlags import JavaServerFlags
 from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
+from vars.config import Logging
 
 
 class JavaDuplicatesHelper:
@@ -44,7 +45,7 @@ class JavaDuplicatesHelper:
                 logging.critical(f"ID MISSMATCH WHILE GRABBING DUPLICATES FOR TABLE {table_name}")
                 # todo: exit critical error
             
-            if lenR > 5000:
+            if lenR > 5000 and Logging.LOG_HIGH_COUNT_DUPLICATE_TABLE:
                 logging.warn(f"High count of elements in duplicates list for table {table_name}")
 
             for result in results:
