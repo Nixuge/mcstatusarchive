@@ -46,7 +46,7 @@ class JavaDuplicatesHelper:
                 # todo: exit critical error
             
             if lenR > 5000 and Logging.LOG_HIGH_COUNT_DUPLICATE_TABLE:
-                logging.warn(f"High count of elements in duplicates list for table {table_name}")
+                logging.warn(f"High count of elements in duplicates list for table {table_name} ({lenR})")
 
             for result in results:
                 self.values[key].append(result[1])
