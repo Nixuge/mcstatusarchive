@@ -1,6 +1,7 @@
 #!/bin/python3.11
 
 # Needs to be on top of everything for it to propagate to imports
+import gc
 import logging
 from utils.logger import get_proper_logger
 from vars.InvalidServers import INVALID_JAVA_SERVERS, InvalidServers
@@ -106,7 +107,7 @@ async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], try_inv
         # logging.info(f"Remaining tasks: {len(running_tasks)}, Remaining servers: {len(to_add)}")
 
     logging.info(f"Grabbed {SAVED_SERVERS.value}/{len(servers)} servers.")
-    logging.info(f"== Done with batch == ({timer.end()})")
+    logging.info(f"== Done with batch == ({timer.end()}, {gc.collect()} 🗑️ )")
 
 
 async def main():
