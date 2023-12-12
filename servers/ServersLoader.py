@@ -1,5 +1,5 @@
 import asyncio
-import json
+import pyjson5
 import logging
 from typing import Coroutine
 from servers.bedrock.BedrockServer import BedrockServerSv
@@ -16,7 +16,7 @@ class ServersLoader:
     def __init__(self, file_name: str) -> None:
         self.file_name = file_name
         with open(self.file_name, 'r') as file:
-            self.data = json.load(file)
+            self.data = pyjson5.load(file)
 
         self.all_servers_coroutines = []
 

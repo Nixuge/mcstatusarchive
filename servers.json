@@ -1,3 +1,9 @@
+// Notes:
+// VSCODE:
+// set file mode to "JSON with Comments" or "JSON5".
+// the extension "JSON5 syntax extended" is recommended instead of "JSON5 syntax" as it's a bit nicer for colors.
+// PYTHON:
+// Parsed using pyjson5.
 {
     "PERMANENTLY_DOWN": {
         "Onecube": "oneCube.com",
