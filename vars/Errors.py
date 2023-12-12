@@ -31,7 +31,7 @@ class ErrorHandler:
 
     # Returns a non-0 int if should exit
     @classmethod
-    def add_error(cls, error: str, data: dict | None = {}) -> int:
+    def add_error(cls, error: str, data: dict | None = None) -> int:
         err_actions = cls._actions.get(error)
         if not err_actions:
             return cls._unknown_error(error)
@@ -40,8 +40,12 @@ class ErrorHandler:
 
         if "log_critical" in err_actions:
             logging.critical("Critical error happened: " + error)
+            if data:
+                logging.critical(str(data))
         if "log_error" in err_actions:
             logging.error("Non-critical error happened: " + error)
+            if data:
+                logging.critical(str(data))
         if "error_file" in err_actions:
             cls._data_to_file(error, data)
         if "traceback" in err_actions:
