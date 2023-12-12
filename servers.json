@@ -46,9 +46,6 @@
         "MinecraftOnline": "MinecraftOnline.com",
 
         "TwoBTwoT": "2b2t.org",
-        "NerdNu": "nerd.nu",
-        "NerdNuCreative": "c.nerd.nu",
-        "NerdNuPvE": "p.nerd.nu",
 
         "LeomelkiLG": "lg.leomelki.fr",
         "Derycube": "play.derycube.fr",
@@ -1423,7 +1420,29 @@
         "play.auroramc.dev",
         "msl.blurcraft.com",
         "play.mccities.com",
-        "arspot.club"
+        "arspot.club",
+        "andromedamc.xyz",
+        "endercraftmc.playwn.co:25575",
+        "play.minecove.org",
+        "hermitveterans.com",
+        "mcl.cloud-smp.com",
+        "galaxiesnetwork.online",
+        "familymc.xyz",
+        "dnsburk.com",
+        "play.clovermc.net",
+        "uncovery.me",
+        "sants.rip",
+        "play.hcfrevival.net",
+        "craftventure.net",
+        "play.tfgames.com.br",
+        "play.barebonesmp.com",
+        "pixelmonbrasil.com.br",
+        "realmportalmc.xyz",
+        "play.originsreborn.org",
+        "play.plantmc.com",
+        "c.nerdnu.io",
+        "p.nerdnu.io",
+        "lobby.nerdnu.io"
     ],
     "duplicates": {
         "play.schoolrp.net": "roleplayhub.com",
@@ -1750,7 +1769,8 @@
         "duels.com.br": "hylex.gg",
         "mediacraft.com.ar": "mineaqua.us",
         "yolomc.com.br": "flamemc.com.br",
-        "mc.keinett.com": "mc.keinett.us"
+        "mc.keinett.com": "mc.keinett.us",
+        "gsgserver.com.br": "gsgserver.com"
     },
     "comments": [
         "ilovecatgirls.xyz, egirlsarehot.xyz, technoblade.club, catgirls.xyz are hypixel",
