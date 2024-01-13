@@ -24,7 +24,8 @@ class ErrorHandler:
         "motd_json_dumps": ["log_error", "error_file"],
         "config_badjson": ["log_error", "error_file", "traceback_file", "exit_all", "exit_thread"],
         "save_status": ["log_error", "error_file", "traceback_file"],
-        "dnslookup": ["log_critical", "error_file", "exit_all", "exit_thread"]
+        "dnslookup": ["log_critical", "error_file", "exit_all", "exit_thread"],
+        "init_not_done": ["log_critical", "error_file", "exit_thread", "exit_all"]
     }
     _errors_counts = {}
     should_stop = False
