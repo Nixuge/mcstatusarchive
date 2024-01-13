@@ -4,8 +4,6 @@
 import gc
 import logging
 from utils.logger import get_proper_logger
-from vars.InvalidServers import INVALID_JAVA_SERVERS, InvalidServers
-from vars.counters import SAVED_SERVERS
 DEBUG_LOG = False
 logger = get_proper_logger(logging.getLogger("root"), DEBUG_LOG)
 
@@ -24,7 +22,9 @@ import signal
 from utils.timer import Timer
 from vars.Errors import ErrorHandler
 from vars.Frontend import FRONTEND_UPDATE_THREAD
-
+from vars.InvalidServers import INVALID_JAVA_SERVERS, InvalidServers
+from vars.LastValueSavers import LAST_BEDROCK_VALUES, LAST_JAVA_VALUES
+from vars.counters import SAVED_SERVERS
 
 import asyncio
 from asyncio import Task
@@ -123,6 +123,9 @@ async def main():
     DBQUEUES.db_queue_java.start()
     DBQUEUES.db_queue_duplicates_java.start()
     DBQUEUES.db_queue_bedrock.start()
+
+    LAST_JAVA_VALUES.start()
+    LAST_BEDROCK_VALUES.start()
 
     logging.info(f"Databases loaded. ({timer.step()})")
 

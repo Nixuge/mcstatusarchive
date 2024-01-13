@@ -22,6 +22,7 @@ from vars.DbQueues import DBQUEUES
 from vars.Errors import ERRORS, ErrorHandler
 from vars.Frontend import FRONTEND_UPDATE_THREAD
 from vars.InvalidServers import INVALID_JAVA_SERVERS
+from vars.LastValueSavers import LAST_JAVA_VALUES
 from vars.config import Logging, Startup, Timings
 from vars.counters import SAVED_SERVERS
 
@@ -95,12 +96,25 @@ class JavaServerSv(ServerSv):
 
     async def load_previous_values_db(self):
         # load last values from db (if any)
-        CumulativeTimers.get_timer("Previous value").start_time(self.table_name)
-        values_ids = DbUtils.get_previous_values_from_db(
-            DBINSTANCES.java_instance.cursor, self.table_name, ServerType.JAVA
-        )
-        self.values = self.duplicates_helper.get_latest_values(values_ids)
-        CumulativeTimers.get_timer("Previous value").end_time(self.table_name)
+        # CumulativeTimers.get_timer("Previous value").start_time(self.table_name)
+        # First try to load from the last values bson
+        values_ids = LAST_JAVA_VALUES.get_values(self.table_name)
+        good = True
+        if values_ids == None: 
+            good = False
+        else:
+            for key in ServerType.JAVA.value:
+                if values_ids.get(key) == None: 
+                    good = False
+        
+        # If that doesn't work, load using the conventional way from the db directly
+        if not good:
+            values_ids = DbUtils.get_previous_values_from_db(
+                DBINSTANCES.java_instance.cursor, self.table_name, ServerType.JAVA, LAST_JAVA_VALUES
+            )
+        # vscode can't figure this out automatically (if none, values_ids will be grabbed conventionally automatically)
+        self.values = self.duplicates_helper.get_latest_values(values_ids) #type: ignore
+        # CumulativeTimers.get_timer("Previous value").end_time(self.table_name)
 
         self.loading_steps.db_load_values = True
 
@@ -126,7 +140,10 @@ class JavaServerSv(ServerSv):
 
         data_duplicate_ids = {}
         for key, value in data.items():
-            data_duplicate_ids[key] = self.duplicates_helper.get_value_for_save(key, value)
+            duplicate_processed_value = self.duplicates_helper.get_value_for_save(key, value)
+            data_duplicate_ids[key] = duplicate_processed_value
+            # Save to last values for easy reload
+            LAST_JAVA_VALUES.set_value(self.table_name, key, duplicate_processed_value)
 
         DBQUEUES.db_queue_java.add_instuction(
             self.insert_query, 
