@@ -28,7 +28,7 @@ class LastValueSaver(Thread):
         logging.info(f"Started LastValueSaver for file \"{filename}\"")
 
     def get_values(self, table_name: str) -> dict[str, Any] | None:
-        return self.content.get(table_name)
+        return dict(self.content.get(table_name)) #type: ignore
 
     def set_value(self, table_name: str, column: str, data: Any):
         # Note: bigger ints turn into int64s, but shouldn't be an issue here
@@ -46,14 +46,14 @@ class LastValueSaver(Thread):
             with open(self.filename, "wb") as file:
                 data = bson.dumps(dict(self.content))
                 file.write(data)
-                # print("Saved successfully")
+                # print("Saved successfully" + str(self.content))
         except:
             ErrorHandler.add_error("last_value_bson_save", {"file": self.filename})
         self.changed = False
     
     def run(self) -> None:
         while not ErrorHandler.should_stop:
-            sleep(2)
+            sleep(5)
             self.save_to_file()
         
         logging.info(f"Stopped '{self.filename}' LastValueSaver thread gracefully.")
