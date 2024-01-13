@@ -46,8 +46,11 @@ async def save_every_x_secs(servers: list):
         i += 1
 
         if ErrorHandler.should_stop:
-            logging.critical("KILLING THE APP.")
-            os.kill(os.getpid(), signal.SIGUSR1)
+            # logging.critical("KILLING THE APP IN 5 SECONDS.")
+            logging.critical("SHOULD STOP FOUND! PROD TESTING: RETURNING ONLY, NOT KILLING.")
+            # await asyncio.sleep(5) # allow time for the dbs to run their checks
+            # os.kill(os.getpid(), signal.SIGUSR1)
+            return
         
         start_time = int(time())
         await run_batch_limit(servers, try_invalid)
@@ -125,8 +128,12 @@ async def main():
 
     servers = await ServersLoader("servers.json").parse()
     logging.info(f"{len(servers)} servers loaded. ({timer.end()})")
-
-    await save_every_x_secs(servers)
+    
+    try:
+        await save_every_x_secs(servers)
+    except asyncio.exceptions.CancelledError:
+        ErrorHandler.should_stop = True
+        logging.info("Excepting a graceful stop soon.")
 
 
 if __name__ == "__main__":

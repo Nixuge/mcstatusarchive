@@ -50,7 +50,10 @@ class FrontendUpdater(Thread):
 
 
     def run(self) -> None:
-        while True:
+        # Initial run to make sure the server is running
+        self._process_updates()
+        
+        while not ErrorHandler.should_stop:
             sleep(30)
 
             # perform create table queries BEFORE insert queries

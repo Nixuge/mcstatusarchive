@@ -33,6 +33,11 @@ class ErrorHandler:
     # Returns a non-0 int if should exit
     @classmethod
     def add_error(cls, error: str, data: dict | None = None) -> int:
+        # Not sure about that, basically avoid logging more info
+        # if an initial error has already been detected & is already planned
+        # to shutdown the whole thing.
+        if cls.should_stop:
+            return 0
         err_actions = cls._actions.get(error)
         if not err_actions:
             return cls._unknown_error(error)

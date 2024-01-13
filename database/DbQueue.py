@@ -1,3 +1,4 @@
+import logging
 from sqlite3 import Connection, Cursor
 import sqlite3
 from threading import Thread
@@ -65,7 +66,7 @@ class DbQueue(Thread):
 
 
     def run(self) -> None:
-        while True:
+        while not ErrorHandler.should_stop:
             sleep(0.5)
 
             # perform create table queries BEFORE insert queries
@@ -75,3 +76,5 @@ class DbQueue(Thread):
             # then perform normal (insert) queries
             if len(self.instructions) > 0:
                 self._process_normal_instruction()
+        
+        logging.info(f"Stopped '{self.file}' DbQueue thread gracefully.")
