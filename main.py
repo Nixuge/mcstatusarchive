@@ -8,6 +8,7 @@ from vars.InvalidServers import INVALID_JAVA_SERVERS, InvalidServers
 from vars.counters import SAVED_SERVERS
 DEBUG_LOG = False
 logger = get_proper_logger(logging.getLogger("root"), DEBUG_LOG)
+from mem_top import mem_top
 
 # Rudimentary check.
 # Will see for smth more complicated later
@@ -66,6 +67,8 @@ async def run_batch_raw(servers: list[JavaServerSv | BedrockServerSv]):
     await asyncio.gather(*tasks)
     logging.info("== Done with batch ==")
 
+class BB:
+    A = 1
 
 async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], try_invalid: bool = False, task_limit: int = 100):
     logging.info("== Starting batch ==")
@@ -105,7 +108,11 @@ async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], try_inv
 
         await asyncio.sleep(.2)
         # logging.info(f"Remaining tasks: {len(running_tasks)}, Remaining servers: {len(to_add)}")
-
+    
+    BB.A += 1
+    if BB.A % 5 == 0:
+        BB.A = 0
+        print(mem_top())
     logging.info(f"Grabbed {SAVED_SERVERS.value}/{len(servers)} servers.")
     logging.info(f"== Done with batch == ({timer.end()}, {gc.collect()} 🗑️ )")
 
