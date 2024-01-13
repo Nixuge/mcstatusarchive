@@ -42,10 +42,13 @@ class LastValueSaver(Thread):
     def save_to_file(self):
         if not self.changed:
             return
-        with open(self.filename, "wb") as file:
-            file.write(bson.dumps(self.content))
-            # print("Saved successfully")
-
+        try:
+            with open(self.filename, "wb") as file:
+                data = bson.dumps(dict(self.content))
+                file.write(data)
+                # print("Saved successfully")
+        except:
+            ErrorHandler.add_error("last_value_bson_save", {"file": self.filename})
         self.changed = False
     
     def run(self) -> None:

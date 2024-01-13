@@ -26,7 +26,8 @@ class ErrorHandler:
         "save_status": ["log_error", "error_file", "traceback_file"],
         "dnslookup": ["log_critical", "error_file", "exit_all", "exit_thread"],
         "init_not_done": ["log_critical", "error_file", "exit_thread", "exit_all"],
-        "last_value_bson_load": ["log_critical", "error_file", "traceback", "traceback_file", "exit_all"]
+        "last_value_bson_load": ["log_critical", "error_file", "traceback", "traceback_file", "exit_all"],
+        "last_value_bson_save": ["log_critical", "error_file", "traceback", "traceback_file", "exit_all"]
     }
     _errors_counts = {}
     should_stop = False
