@@ -1,5 +1,6 @@
 import asyncio
 import base64
+from dataclasses import dataclass
 import json
 import logging
 from time import time
@@ -24,6 +25,19 @@ from vars.InvalidServers import INVALID_JAVA_SERVERS
 from vars.config import Logging, Startup, Timings
 from vars.counters import SAVED_SERVERS
 
+@dataclass
+class LoadingSteps:
+    dns: bool
+    db_init: bool
+    db_load_values: bool
+
+    def all_done(self):
+        return self.dns and self.db_init and self.db_load_values
+
+    @classmethod
+    def new(cls):
+        return cls(False, False, False)
+    
 
 class JavaServerSv(ServerSv):
     server: JavaServer
@@ -31,10 +45,14 @@ class JavaServerSv(ServerSv):
     insert_query: str
     flags: JavaServerFlags
     duplicates_helper: JavaDuplicatesHelper
+    loading_steps: LoadingSteps
 
+    # TODO: IF POSSIBLE MOVE THE LOADING STEPS TO ANOTHER CLASS 
     async def __init__(self, table_name: str, ip: str, port: int = 25565) -> None:
         # inheriting
         await super().__init__(table_name, ip, port)
+        # steps done
+        self.loading_steps = LoadingSteps.new()
         # get non changing values
         self.table_name = table_name
 
@@ -62,26 +80,37 @@ class JavaServerSv(ServerSv):
             if exitcode > 0: exit(exitcode)
         CumulativeTimers.get_timer("Lookup").end_time(table_name)
 
+        self.loading_steps.dns = True
+
+    async def init_db(self):
         # db init
-        self.insert_query = JavaQueries.get_insert_query(table_name)
-        DBQUEUES.db_queue_java.add_important_instruction(JavaQueries.get_create_table_query(table_name))
+        self.insert_query = JavaQueries.get_insert_query(self.table_name)
+        DBQUEUES.db_queue_java.add_important_instruction(JavaQueries.get_create_table_query(self.table_name))
 
         # flag dbs init
-        self.flags = JavaServerFlags(table_name)
+        self.flags = JavaServerFlags(self.table_name)
         self.duplicates_helper = JavaDuplicatesHelper(self.flags)
 
+        self.loading_steps.db_init = True
+
+    async def load_previous_values_db(self):
         # load last values from db (if any)
-        CumulativeTimers.get_timer("Previous value").start_time(table_name)
+        CumulativeTimers.get_timer("Previous value").start_time(self.table_name)
         values_ids = DbUtils.get_previous_values_from_db(
-            DBINSTANCES.java_instance.cursor, table_name, ServerType.JAVA
+            DBINSTANCES.java_instance.cursor, self.table_name, ServerType.JAVA
         )
         self.values = self.duplicates_helper.get_latest_values(values_ids)
-        CumulativeTimers.get_timer("Previous value").end_time(table_name)
+        CumulativeTimers.get_timer("Previous value").end_time(self.table_name)
 
+        self.loading_steps.db_load_values = True
+
+    async def perform_startup_checks(self):
         if Startup.SHOULD_PERFORM_STARTUP_CHECKS:
-            run_db_checks(table_name)
+            run_db_checks(self.table_name)
 
     async def save_status(self):
+        if not self.loading_steps.all_done():
+            return exit(ErrorHandler.add_error("init_not_done", {"table": self.table_name}))
         try:
             await self._save_status()
         except:
