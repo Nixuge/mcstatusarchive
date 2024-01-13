@@ -28,7 +28,10 @@ class LastValueSaver(Thread):
         logging.info(f"Started LastValueSaver for file \"{filename}\"")
 
     def get_values(self, table_name: str) -> dict[str, Any] | None:
-        return dict(self.content.get(table_name)) #type: ignore
+        data = self.content.get(table_name)
+        if data == None:
+            return None
+        return dict(data) # CLONE DICT to avoid it being changed outside & wrongfully changed here as a result.
 
     def set_value(self, table_name: str, column: str, data: Any):
         # Note: bigger ints turn into int64s, but shouldn't be an issue here
