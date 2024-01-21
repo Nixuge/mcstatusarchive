@@ -1,6 +1,7 @@
 {
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.autoImportCompletions": true,
+    "vscord.app.privacyMode.enable": false,
     "files.associations": {
         "servers.json": "json5"
     }

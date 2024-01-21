@@ -20,7 +20,7 @@ class Timer:
 
 class CumulativeTimer:
     total_time: float
-    start_times: dict
+    start_times: dict[str, int]
     def __init__(self) -> None:
         self.start_times = {}
         self.total_time = 0
