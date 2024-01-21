@@ -27,7 +27,8 @@ class ErrorHandler:
         "dnslookup": ["log_critical", "error_file", "exit_all", "exit_thread"],
         "init_not_done": ["log_critical", "error_file", "exit_thread", "exit_all"],
         "last_value_bson_load": ["log_critical", "error_file", "traceback", "traceback_file", "exit_all"],
-        "last_value_bson_save": ["log_critical", "error_file", "traceback", "traceback_file", "exit_all"]
+        "last_value_bson_save": ["log_critical", "error_file", "traceback", "traceback_file", "exit_all"],
+        "servers_init": ["log_critical", "error_file", "traceback", "traceback_file", "exit_all"]
     }
     _errors_counts = {}
     should_stop = False

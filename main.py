@@ -47,7 +47,7 @@ async def save_every_x_secs(servers: list):
 
         if ErrorHandler.should_stop:
             # logging.critical("KILLING THE APP IN 5 SECONDS.")
-            logging.critical("SHOULD STOP FOUND! PROD TESTING: RETURNING ONLY, NOT KILLING.")
+            logging.critical("Stop instruction found. Now stopping the app.")
             # await asyncio.sleep(5) # allow time for the dbs to run their checks
             # os.kill(os.getpid(), signal.SIGUSR1)
             return
