@@ -6,6 +6,7 @@ from servers.bedrock.BedrockServer import BedrockServerSv
 
 from servers.java.JavaServer import JavaServerSv
 from utils.timer import CumulativeTimers, Timer
+from vars.Errors import ErrorHandler
 from vars.config import Startup
 
 
@@ -83,34 +84,39 @@ class ServersLoader:
 
         self._parse_dict_ips()
         self._parse_list_ips()
+        all_bedrock_servers = []
+        all_java_servers = []
+        try:
+            bedrock_timer = Timer()
+            logging.info(f"Starting to load bedrock servers. (count: {len(self.bedrock_coroutines)})")
+            all_bedrock_servers = await asyncio.gather(*self.bedrock_coroutines)
+            logging.info(f"Done loading bedrock servers ({bedrock_timer.end()}).")
 
-        bedrock_timer = Timer()
-        logging.info(f"Starting to load bedrock servers. (count: {len(self.bedrock_coroutines)})")
-        all_bedrock_servers = await asyncio.gather(*self.bedrock_coroutines)
-        logging.info(f"Done loading bedrock servers ({bedrock_timer.end()}).")
+            # for timer_key in timers:
+            #     times = CumulativeTimers.get_timer(timer_key).stop()
+            #     logging.info(f"{timer_key} took {times[0]}s total ({times[1]}s average)")
+            CumulativeTimers.remove_timers(*timers)
 
-        # for timer_key in timers:
-        #     times = CumulativeTimers.get_timer(timer_key).stop()
-        #     logging.info(f"{timer_key} took {times[0]}s total ({times[1]}s average)")
-        CumulativeTimers.remove_timers(*timers)
+            java_timer = Timer()
+            logging.info(f"Starting to load dns for java servers. (count: {len(self.java_coroutines)})")
+            all_java_servers = await asyncio.gather(*self.java_coroutines)
+            logging.info(f"Done loading dns for java servers ({java_timer.step()}).")
 
-        java_timer = Timer()
-        logging.info(f"Starting to load dns for java servers. (count: {len(self.java_coroutines)})")
-        all_java_servers = await asyncio.gather(*self.java_coroutines)
-        logging.info(f"Done loading dns for java servers ({java_timer.step()}).")
+            logging.info(f"Starting to init databases for java servers. (count: {len(self.java_coroutines)})")
+            await asyncio.gather(*[java_server.init_db() for java_server in all_java_servers])
+            logging.info(f"Done initing databases for java servers ({java_timer.step()}).")
 
-        logging.info(f"Starting to init databases for java servers. (count: {len(self.java_coroutines)})")
-        await asyncio.gather(*[java_server.init_db() for java_server in all_java_servers])
-        logging.info(f"Done initing databases for java servers ({java_timer.step()}).")
+            logging.info(f"Starting to load previous database values for java servers. (count: {len(self.java_coroutines)})")
+            await asyncio.gather(*[java_server.load_previous_values_db() for java_server in all_java_servers])
+            logging.info(f"Done loading previous database values for java servers ({java_timer.end()}).")
 
-        logging.info(f"Starting to load previous database values for java servers. (count: {len(self.java_coroutines)})")
-        await asyncio.gather(*[java_server.load_previous_values_db() for java_server in all_java_servers])
-        logging.info(f"Done loading previous database values for java servers ({java_timer.end()}).")
-
-        if Startup.SHOULD_PERFORM_STARTUP_CHECKS:
-            startup_timer = Timer()
-            logging.info(f"Performing startup checks for java servers. (count: {len(self.java_coroutines)})")
-            await asyncio.gather(*[java_server.perform_startup_checks() for java_server in all_java_servers])
-            logging.info(f"Done performing startup checks for java servers ({startup_timer.end()}).")
+            if Startup.SHOULD_PERFORM_STARTUP_CHECKS:
+                startup_timer = Timer()
+                logging.info(f"Performing startup checks for java servers. (count: {len(self.java_coroutines)})")
+                await asyncio.gather(*[java_server.perform_startup_checks() for java_server in all_java_servers])
+                logging.info(f"Done performing startup checks for java servers ({startup_timer.end()}).")
+            
+        except:
+            ErrorHandler.add_error("servers_init")
 
         return all_bedrock_servers + all_java_servers
