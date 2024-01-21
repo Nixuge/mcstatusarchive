@@ -1442,7 +1442,27 @@
         "play.plantmc.com",
         "c.nerdnu.io",
         "p.nerdnu.io",
-        "lobby.nerdnu.io"
+        "lobby.nerdnu.io",
+        "sarmacraft.info",
+        "play.cubed.community",
+        "play.ghocom.net",
+        "play.magoocraft.net",
+        "build.mcmiddleearth.com",
+        "opencraft.pl",
+        "find.storyfortune.net",
+        "play.back2basics.gg",
+        "mc.vanillavicerp.pt",
+        "exorath.net",
+        "play.otheryia.com",
+        "play.lootcraft.org",
+        "play.boppixelmon.com",
+        "limecraft.org",
+        "vh.litecraft.org",
+        "StyyCraft.net",
+        "oraclepvp.net",
+        "play.minevita.net",
+        "play.vanillaplus.uk",
+        "ferrycraft.net"
     ],
     "duplicates": {
         "play.schoolrp.net": "roleplayhub.com",
@@ -1770,7 +1790,13 @@
         "mediacraft.com.ar": "mineaqua.us",
         "yolomc.com.br": "flamemc.com.br",
         "mc.keinett.com": "mc.keinett.us",
-        "gsgserver.com.br": "gsgserver.com"
+        "gsgserver.com.br": "gsgserver.com",
+        "heroes.cloudygaming.net": "down",
+        "play.mclinkers.com": "down",
+        "play.nottocraft.co.uk": "down",
+        "atlasbalkan.net": "atlasbalkan.me",
+        "the-island-of-paradise.com:25566": "down",
+        "netheritemc.net": "down"
     },
     "comments": [
         "ilovecatgirls.xyz, egirlsarehot.xyz, technoblade.club, catgirls.xyz are hypixel",
@@ -1859,7 +1885,12 @@
         "test.geysermc.org",
         "play.creeperslab.net",
         "play.royalmc.fun",
-        "play.yakisovasmp.com:25750"
+        "play.yakisovasmp.com:25750",
+        "play.bendersmc.co",
+        "Play.blockcraft.uk",
+        "mobile.magoocraft.net:25578",
+        "opencraft.pl",
+        "mc.sklyare.com:50001"
     ],
     "bedrock_duplicates": {
         "find.manacube.com": "play.manacube.net",
