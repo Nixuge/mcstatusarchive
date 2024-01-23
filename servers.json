@@ -1263,7 +1263,7 @@
         "mc.playtheatria.com",
         "play.colosseumcraft.com",
         "play.corba.world",
-        // "play.mc-ages.com",
+        "play.mc-ages.com",
         "play.sentinelcraft.net",
         "dusk.playnovoro.com",
         "play.afcraft.net",
@@ -1584,7 +1584,15 @@
         "Play.firecrusades.com",
         "hub.reforgednetwork.com",
         "mc.projectnewtomorrow.org",
-        "elopvp.eu"
+        "elopvp.eu",
+        "cf.ultimatesmp.net",
+        "mythic.gg",
+        "lunaria.gg",
+        "play.craft.moe",
+        "zyro.gg",
+        "majkrafty.pl",
+        "play.winterscape.org",
+        "MirelsOfChaos.my.id"
     ],
     "duplicates": {
         "play.schoolrp.net": "roleplayhub.com",
@@ -1928,7 +1936,12 @@
         "mc.deathzone.club": "deathzone.net",
         "play.oasissmp.com": "play.oasissmp.gg",
         "play.jollysmp.com": "play.hypersteal.net",
-        "play.eradox.net": "eradox.quest"
+        "play.eradox.net": "eradox.quest",
+        "mc.stegripe.org": "mc.clytage.org",
+        "play.ocetiers.com": "mythic.gg",
+        "vertez.pl": "mcvh.pl",
+        "karua.cc": "kazer.gg",
+        "antiac.de": "antiac.net"
     },
     "comments": [
         "ilovecatgirls.xyz, egirlsarehot.xyz, technoblade.club, catgirls.xyz are hypixel",
