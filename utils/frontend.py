@@ -13,14 +13,23 @@ UPDATE_URL = "http://127.0.0.1:50474/update_fields"
 
 class FrontendUpdater(Thread):
     updates: list[dict]
+    is_running: bool
     loop: asyncio.AbstractEventLoop
 
     def __init__(self) -> None:
         super().__init__(None, None, "FrontendUpdaterThread") 
         self.updates = []
+        self.is_running = False
         self.loop = asyncio.get_event_loop()
     
     def add_update(self, table_name: str, update: dict):
+        # Avoid growing the list infinitely if the update thread is dead
+        if not self.is_running:
+            return
+        # Also avoid having the list too large anyways
+        while len(self.updates) > 5000:
+            self.updates.pop(0)
+        
         update = dict(update) # new dict
 
         favicon = update.get("favicon")
@@ -46,14 +55,14 @@ class FrontendUpdater(Thread):
                         
         except:
             exit_code = ErrorHandler.add_error("frontend")
-            if exit_code > 0: exit(exit_code)
+            if exit_code > 0: 
+                self.is_running = False
+                exit(exit_code)
 
 
     def run(self) -> None:
-        # Initial run to make sure the server is running
-        self._process_updates()
-        
-        while not ErrorHandler.should_stop:
+        self.is_running = True
+        while True:
             sleep(30)
 
             # perform create table queries BEFORE insert queries
