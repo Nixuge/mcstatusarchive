@@ -1,0 +1,4 @@
+httpx
+bson
+mcstatus
+pyjson5
