@@ -8,8 +8,8 @@ Restart=always
 RestartSec=5
 Type=simple
 User=nix
-WorkingDirectory=/home/nix/webserver/McStatusArchive
-ExecStart=/home/nix/webserver/mcstatusarchive/main.py
+WorkingDirectory=/home/nix/mcstatusarchive
+ExecStart=/home/nix/mcstatusarchive/main.py
 TimeoutStopSec=30
 
 [Install]

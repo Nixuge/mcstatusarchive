@@ -1,4 +1,4 @@
-#!/bin/python3.11
+#!./venv/bin/python
 
 # Needs to be on top of everything for it to propagate to imports
 import gc
