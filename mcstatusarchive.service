@@ -7,7 +7,6 @@ SyslogIdentifier=mcstatusarchive
 Restart=always
 RestartSec=5
 Type=simple
-User=nix
 WorkingDirectory=/home/nix/mcstatusarchive
 ExecStart=/home/nix/mcstatusarchive/main.py
 TimeoutStopSec=30
