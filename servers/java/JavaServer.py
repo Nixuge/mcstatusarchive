@@ -33,7 +33,14 @@ class LoadingSteps:
     db_load_values: bool
 
     def all_done(self):
-        return self.dns and self.db_init and self.db_load_values
+        if self.dns and self.db_init and self.db_load_values:
+            return True
+        if not self.dns:
+            return "DNS"
+        if not self.db_init:
+            return "DB_INIT"
+        if not self.db_load_values:
+            return "DB_LOAD_VALUES"
 
     @classmethod
     def new(cls):
@@ -123,8 +130,9 @@ class JavaServerSv(ServerSv):
             run_db_checks(self.table_name)
 
     async def save_status(self):
-        if not self.loading_steps.all_done():
-            return exit(ErrorHandler.add_error("init_not_done", {"table": self.table_name}))
+        done_results = self.loading_steps.all_done()
+        if done_results != True:
+            return exit(ErrorHandler.add_error("init_not_done", {"table": self.table_name, "missing": done_results}))
         try:
             await self._save_status()
         except:
