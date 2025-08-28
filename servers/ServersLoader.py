@@ -1,7 +1,7 @@
 import asyncio
 import pyjson5
 import logging
-from typing import Any, Coroutine
+from typing import Any, Coroutine, List
 from servers.bedrock.BedrockServer import BedrockServerSv
 
 from servers.java.JavaServer import JavaServerSv
@@ -52,7 +52,7 @@ class ServersLoader:
         servers: dict | None = self.data.get(list_name)
         if not servers:
             return
-            
+
         for table_name, server_ip in servers.items():
             server_list.append(clazz(table_name, server_ip))
 
@@ -79,6 +79,21 @@ class ServersLoader:
         self._parse_list_ips_back("java_list", JavaServerSv, self.java_coroutines)
         self._parse_list_ips_back("bedrock_list", BedrockServerSv, self.bedrock_coroutines)
 
+    async def _load_servers(self, server_type: str, coroutines: list[Coroutine]) -> List:
+        server_objects = []
+        chunks = [coroutines[x:x+200] for x in range(0, len(coroutines), 200)]
+        logging.info(f"Got {len(coroutines)} {server_type} servers. Splitting DNS resolution tasks in {len(chunks)} chunk(s) to ease the file descriptor limit (Socket requests count as open files).")
+        for i, chunk in enumerate(chunks):
+            loaded_servers = await asyncio.gather(*chunk)
+            server_objects += loaded_servers
+            if i+1 == len(chunks):
+                logging.info("Done processing all chunks!")
+            else:
+                logging.info(f"Done processing chunk {i+1}/{len(chunks)}. Waiting 0.2s.")
+                await asyncio.sleep(0.2)
+        
+        return server_objects
+
     async def parse(self) -> list[JavaServerSv | BedrockServerSv]:
         timers = ("Lookup", "Previous value")
 
@@ -86,10 +101,11 @@ class ServersLoader:
         self._parse_list_ips()
         all_bedrock_servers = []
         all_java_servers = []
+        logging.info("Done getting the IPs and table names out of the servers.json file.")
         try:
             bedrock_timer = Timer()
             logging.info(f"Starting to load bedrock servers. (count: {len(self.bedrock_coroutines)})")
-            all_bedrock_servers = await asyncio.gather(*self.bedrock_coroutines)
+            all_bedrock_servers = await self._load_servers("Bedrock", self.bedrock_coroutines)
             logging.info(f"Done loading bedrock servers ({bedrock_timer.end()}).")
 
             # for timer_key in timers:
@@ -99,7 +115,7 @@ class ServersLoader:
 
             java_timer = Timer()
             logging.info(f"Starting to load dns for java servers. (count: {len(self.java_coroutines)})")
-            all_java_servers = await asyncio.gather(*self.java_coroutines)
+            all_java_servers = await self._load_servers("Java", self.java_coroutines)
             logging.info(f"Done loading dns for java servers ({java_timer.step()}).")
 
             logging.info(f"Starting to init databases for java servers. (count: {len(self.java_coroutines)})")
