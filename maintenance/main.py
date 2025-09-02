@@ -8,7 +8,6 @@ from maintenance.checks import run_db_checks
 from maintenance.migrator import process_column
 from utils.timer import Timer
 from vars.DbInstances import DBINSTANCES
-from vars.ExceptedKeys import JAVA_EXCEPTED_KEYS
 
 AUTO_RUN = True
 

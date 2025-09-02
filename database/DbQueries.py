@@ -1,6 +1,3 @@
-from vars.ExceptedKeys import JAVA_EXCEPTED_KEYS
-
-
 class BedrockQueries:
     @staticmethod
     def get_create_table_query(name: str) -> str:
@@ -48,24 +45,6 @@ class JavaQueries:
     @staticmethod
     def get_insert_query(name: str) -> str:
         return f"""INSERT INTO {name} VALUES (?,?,?,?,?,?,?,?,?);"""
-
-class JavaDuplicateQueries:
-    @staticmethod
-    def get_duplicate_table_name(name: str, key: str) -> str:
-        return f"{name}_duplicates_{key}"
-
-    @staticmethod
-    def get_create_table_query(name: str, key: str) -> str:
-        return f"""CREATE TABLE IF NOT EXISTS {name}_duplicates_{key} (
-                    id INT NOT NULL,
-                    {key} {JAVA_EXCEPTED_KEYS[key]} NOT NULL,
-                    
-                    PRIMARY KEY (id)
-                    );"""
-
-    @staticmethod
-    def get_insert_query(name: str, key: str) -> str:
-        return f"""INSERT INTO {name}_duplicates_{key} VALUES (?,?);"""
 
 
 class GlobalQueries:

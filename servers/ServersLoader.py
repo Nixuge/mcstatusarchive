@@ -19,7 +19,7 @@ class ServersLoader:
     def __init__(self, file_name: str) -> None:
         self.file_name = file_name
         with open(self.file_name, 'r') as file:
-            self.data = pyjson5.load(file)
+            self.data = pyjson5.load(file) # pyright: ignore[reportArgumentType]
 
         self.java_coroutines = []
         self.bedrock_coroutines = []

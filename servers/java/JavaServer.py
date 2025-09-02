@@ -1,66 +1,255 @@
 import asyncio
 import base64
 from dataclasses import dataclass
+from enum import Enum
 import json
 import logging
 from time import time
+from typing import Any, Callable
 import dns.resolver
 from mcstatus import JavaServer
-from mcstatus.pinger import PingResponse
+from mcstatus.responses import JavaStatusResponse
 from mcstatus.status_response import JavaStatusPlayer
 from database.DbQueries import JavaQueries
 from maintenance.checks import run_db_checks
 
-from servers.Server import ServerSv
+from servers.Server import DbUpdater, ServerSv
 
 from database.DbUtils import ServerType, DbUtils
-from servers.java.JavaDuplicatesHelper import JavaDuplicatesHelper
-from servers.java.JavaServerFlags import JavaServerFlags
+from utils.loading_steps import JavaLoadingSteps
 from utils.timer import CumulativeTimers
 from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
 from vars.Errors import ERRORS, ErrorHandler
 from vars.Frontend import FRONTEND_UPDATE_THREAD
 from vars.InvalidServers import INVALID_JAVA_SERVERS
-from vars.LastValueSavers import LAST_JAVA_VALUES
 from vars.config import Logging, Startup, Timings
 from vars.counters import SAVED_SERVERS
 
+import zstandard
+
+class JAVA_FIELD(Enum):
+    save_time = 1
+    players_on = 2
+    players_max = 3
+    ping = 4
+    players_sample = 5
+    version_protocol = 6
+    version_name = 7
+    motd = 8
+    favicon = 9
+
 @dataclass
-class LoadingSteps:
-    dns: bool
-    db_init: bool
-    db_load_values: bool
+class JavaValues:
+    zstd_compressor = zstandard.ZstdCompressor()
 
-    def all_done(self):
-        if self.dns and self.db_init and self.db_load_values:
-            return True
-        if not self.dns:
-            return "DNS"
-        if not self.db_init:
-            return "DB_INIT"
-        if not self.db_load_values:
-            return "DB_LOAD_VALUES"
+    save_time: int
+    players_on: int
+    players_max: int
+    ping: int
+    player_sample: bytes
+    version_protocol: int
+    version_name: str
+    motd: Any # TODO: Type properly
+    favicon: bytes
 
-    @classmethod
-    def new(cls):
-        return cls(False, False, False)
+    def __getitem__(self, key: JAVA_FIELD):
+        # Note: could probably be done using:
+        # return self.__getattribute__(str(key))
+        # But still writing all that boilerplate just to be SURE everything is correct.
+        if key == JAVA_FIELD.save_time:
+            return self.save_time
+        
+        if key == JAVA_FIELD.players_on:
+            return self.players_on
+        if key == JAVA_FIELD.players_max:
+            return self.players_max
+        
+        if key == JAVA_FIELD.ping:
+            return self.ping
+        
+        if key == JAVA_FIELD.players_sample:
+            return self.player_sample
+        
+        if key == JAVA_FIELD.version_protocol:
+            return self.version_protocol
+        if key == JAVA_FIELD.version_name:
+            return self.version_name
+        
+        if key == JAVA_FIELD.motd:
+            return self.motd
+        
+        if key == JAVA_FIELD.favicon:
+            return self.favicon
+        
+        # TODO: Raise exception if ends up here with no value at the end
+        # using errorhandler*
+
+    def _parse_motd_legacy_shouldnt_use_anymore(self, status: JavaStatusResponse) -> str:
+        # TODO: check on that again
+        # TBH i think would be better if the raw motd was just saved as is.
+        raw = status.motd.raw
+
+        # Normal legacy ping
+        if isinstance(raw, str):
+            return raw
+        
+        # New ping
+        elif isinstance(raw, dict):
+            # Extra = new format, so if extra return the new format
+            if "extra" in raw.keys():
+                return json.dumps(raw)
+
+            # Text = the old format with §s
+            text = raw.get("text")
+
+            # Just in case there's no text for some reason?
+            if text == None: return ""
+            
+            return text
+        
+        else:
+            exit_code = ErrorHandler.add_error("motd_parse_type", {"raw": raw, "type": type(raw)})
+            if exit_code > 0: exit(exit_code)
+        return "?"
+
+    def _get_motd(self, status: JavaStatusResponse):
+        # Note: when migrating to just saving all of the MOTD instead of just a portion of it, make sure to json.dumps the string INSTEAD OF STR()ING IT
+        # Did that at one point and now on an old db there's a part where it has stringified python dicts instead of proper json
+        # Basically just write 2 isinstances (str and dict otherwise err) and for the dict one USE JSON.DUMPS
+        return self.zstd_compressor.compress(self._parse_motd_legacy_shouldnt_use_anymore(status).encode("utf-8"))
+
+    def _get_favicon(self, favicon: str | None) -> bytes:
+        if favicon:
+            return base64.decodebytes(bytes(favicon.split(',')[-1], "ascii"))
+        return b""
+
+    def _get_players_sample(self, sample: list[JavaStatusPlayer] | None) -> bytes:
+        if sample == None:
+            return b""
+        if len(sample) == 0:
+            return b""
+        
+        players = []
+        for player in sample:
+            players.append({
+                "name": player.name,
+                "id": player.id
+            })
+
+        return self.zstd_compressor.compress(str(players).encode("utf-8"))
+
+    def update_using_response_get_changed(self, status: JavaStatusResponse) -> list[JAVA_FIELD]:
+        changed: list[JAVA_FIELD] = []
+
+        rn = int(time())
+        if self.save_time != rn: # Pretty sure this is always true for obv reasons but just in case
+            changed.append(JAVA_FIELD.save_time)
+            self.save_time = rn
+
+        if self.players_on != status.players.online:
+            changed.append(JAVA_FIELD.players_on)
+            self.players_on = status.players.online
+        if self.players_max != status.players.max:
+            changed.append(JAVA_FIELD.players_max)
+            self.players_max = status.players.max
+
+        self.ping = int(status.latency) # Always update ping to serve as a reference point.
+        changed.append(JAVA_FIELD.ping)
+
+        players_sample = self._get_players_sample(status.players.sample)
+        if self.player_sample != players_sample:
+            changed.append(JAVA_FIELD.players_sample)
+            self.player_sample = players_sample
+
+        if self.version_protocol != status.version.protocol:
+            changed.append(JAVA_FIELD.version_protocol)
+            self.version_protocol = status.version.protocol
+        if self.version_name != status.version.name:
+            changed.append(JAVA_FIELD.version_name)
+            self.version_name = status.version.name
+
+        motd = self._get_motd(status)
+        if self.motd != motd:
+            changed.append(JAVA_FIELD.motd)
+            self.motd = motd
+
+        favicon = self._get_favicon(status.icon)
+        if self.favicon != favicon:
+            changed.append(JAVA_FIELD.favicon)
+            self.fav = favicon
+
+        return changed
     
+
+
+class JavaDbUpdater(DbUpdater):
+    func_per_field: dict[JAVA_FIELD, Callable[[JavaValues, Any], None]]
+    def __init__(self) -> None:
+        self.func_per_field = {
+            JAVA_FIELD.save_time: self.new_save,
+            JAVA_FIELD.players_on: self.players_on_changed,
+            JAVA_FIELD.players_max: self.players_max_changed,
+            JAVA_FIELD.ping: lambda *args: None, # Do nothing as ping is already saved with the save_time
+            JAVA_FIELD.players_sample: self.players_sample_changed,
+            JAVA_FIELD.version_protocol: self.version_protocol_changed,
+            JAVA_FIELD.version_name: self.version_name_changed,
+            JAVA_FIELD.motd: self.motd_changed,
+            JAVA_FIELD.favicon: self.favicon_changed
+        }
+
+    def update_all_changed(self, values: JavaValues, changed_fields: list[JAVA_FIELD]):
+        for changed in changed_fields:
+            new_value = values[changed]
+            func = self.func_per_field[changed]
+            func(values, new_value)
+
+    def _update_simple_field(self):
+        pass #TODO: used for simple values
+
+    def _update_value_ref_field(self):
+        pass #TODO: used for values w values in a different table than the changes.
+
+
+    def new_save(self, values: JavaValues, save_time: int):
+        pass
+
+    def players_on_changed(self, values: JavaValues, players_on: int):
+        pass
+
+    def players_max_changed(self, values: JavaValues, players_max: int):
+        pass
+
+    def players_sample_changed(self, values: JavaValues, players_sample: bytes):
+        pass
+
+    def version_protocol_changed(self, values: JavaValues, version_protocol: int):
+        pass
+
+    def version_name_changed(self, values: JavaValues, version_name: str):
+        pass
+
+    def motd_changed(self, values: JavaValues, motd: bytes):
+        pass
+
+    def favicon_changed(self, values: JavaValues, favicon: bytes):
+        pass
+
 
 class JavaServerSv(ServerSv):
     server: JavaServer
     table_name: str
-    insert_query: str
-    flags: JavaServerFlags
-    duplicates_helper: JavaDuplicatesHelper
-    loading_steps: LoadingSteps
+    db_updater: JavaDbUpdater # TODO: one instance per server or global instance? Doesn't really matter but yeh. 
+    loading_steps: JavaLoadingSteps # TODO: Remove? Not really sure if it's really needed, could easily be moved in the init.
 
-    # TODO: IF POSSIBLE MOVE THE LOADING STEPS TO ANOTHER CLASS 
+    values: JavaValues
+
+    # TODO: move the DNS loading to another func (not urgent)
     async def __init__(self, table_name: str, ip: str, port: int = 25565) -> None:
         # inheriting
         await super().__init__(table_name, ip, port)
         # steps done
-        self.loading_steps = LoadingSteps.new()
+        self.loading_steps = JavaLoadingSteps.new()
         # get non changing values
         self.table_name = table_name
 
@@ -90,44 +279,14 @@ class JavaServerSv(ServerSv):
 
         self.loading_steps.dns = True
 
-    async def init_db(self):
+
+    async def load_db(self):
         # db init
         self.insert_query = JavaQueries.get_insert_query(self.table_name)
         DBQUEUES.db_queue_java.add_important_instruction(JavaQueries.get_create_table_query(self.table_name))
 
-        # flag dbs init
-        self.flags = JavaServerFlags(self.table_name)
-        self.duplicates_helper = JavaDuplicatesHelper(self.flags)
+        self.loading_steps.db = True
 
-        self.loading_steps.db_init = True
-
-    async def load_previous_values_db(self):
-        # load last values from db (if any)
-        # CumulativeTimers.get_timer("Previous value").start_time(self.table_name)
-        # First try to load from the last values bson
-        values_ids = LAST_JAVA_VALUES.get_values(self.table_name)
-        good = True
-        if values_ids == None: 
-            good = False
-        else:
-            for key in ServerType.JAVA.value:
-                if values_ids.get(key) == None: 
-                    good = False
-        
-        # If that doesn't work, load using the conventional way from the db directly
-        if not good:
-            values_ids = DbUtils.get_previous_values_from_db(
-                DBINSTANCES.java_instance.cursor, self.table_name, ServerType.JAVA, LAST_JAVA_VALUES
-            )
-        # vscode can't figure this out automatically (if none, values_ids will be grabbed conventionally automatically)
-        self.values = self.duplicates_helper.get_latest_values(values_ids) #type: ignore
-        # CumulativeTimers.get_timer("Previous value").end_time(self.table_name)
-
-        self.loading_steps.db_load_values = True
-
-    async def perform_startup_checks(self):
-        if Startup.SHOULD_PERFORM_STARTUP_CHECKS:
-            run_db_checks(self.table_name)
 
     async def save_status(self):
         done_results = self.loading_steps.all_done()
@@ -142,7 +301,6 @@ class JavaServerSv(ServerSv):
         status = await self._perform_status()
         if status == None: return
 
-        data = self.get_values_dict(status)
         data = self.update_values(data)  # only keep changed ones
         FRONTEND_UPDATE_THREAD.add_update(self.table_name, data)
 
@@ -166,9 +324,10 @@ class JavaServerSv(ServerSv):
                 # version = mc version for the ping.
                 # Default is 47 (1.8 -> 1.8.9)
                 # Set it to 764 (1.20.2, currently latest)
+                # 769 is 1.21.4
                 # Should still be able to ping old clients, 
                 # While showing new fancy hex colors on servers that support it
-                status = await self.server.async_status(version=764) 
+                status = await self.server.async_status(version=769)
                 INVALID_JAVA_SERVERS.mark_server_valid(self.ip)
                 SAVED_SERVERS.value += 1
         except Exception as e:
@@ -186,73 +345,6 @@ class JavaServerSv(ServerSv):
         
         return status
 
-    def get_values_dict(self, status: PingResponse) -> dict:
-        # TODO (maybe, check ram usage): check to objects instead of dicts for values
-        return {
-            "save_time": int(time()),
-            "players_on": status.players.online,
-            "players_max": status.players.max,
-            "ping": int(status.latency),
-            "players_sample": self._get_player_sample(status.players.sample),
-            "version_protocol": status.version.protocol,
-            "version_name": status.version.name,
-            "motd": self._parse_motd(status),
-            "favicon": self._get_favicon(status.favicon)
-        }
-
-    @staticmethod
-    def _parse_motd(status: PingResponse) -> dict | str:
-        raw = status.motd.raw
-
-        # Normal legacy ping
-        if isinstance(raw, str):
-            return raw
-        
-        # New ping
-        elif isinstance(raw, dict):
-            # Extra = new format, so if extra return the new format
-            if "extra" in raw.keys():
-                return json.dumps(raw)
-
-            # Text = the old format with §s
-            text = raw.get("text")
-
-            # Just in case there's no text for some reason?
-            if text == None: return ""
-            
-            return text
-        
-        else:
-            exit_code = ErrorHandler.add_error("motd_parse_type", {"raw": raw, "type": type(raw)})
-            if exit_code > 0: exit(exit_code)
-        return "?"
-
-    @staticmethod
-    def _get_favicon(favicon: str | None) -> bytes | str:
-        if favicon:
-            # TODO (maybe?): Switch to storing images externally as files,
-            # & only storing the MD5s here
-            # -> requires altering the db (column favicon BLOB -> TEXT)
-            # -> less practical
-            # -> only useful for the few servers changing favicons often
-            # ---> 8b8t.me (rotating favicons)
-            # ---> craftplay.pl (for some reason same favicon but a bit different???)
-            return base64.decodebytes(bytes(favicon.split(',')[-1], "ascii"))
-        return "None"
-
-    @staticmethod
-    def _get_player_sample(sample: list[JavaStatusPlayer] | None) -> str:
-        if sample == None:
-            return "None"
-        if len(sample) == 0:
-            return "[]"
-
-        players = []
-        for player in sample:
-            players.append({
-                "name": player.name,
-                "id": player.id
-            })
-
-        return str(players)
-
+    async def perform_startup_checks(self):
+        if Startup.SHOULD_PERFORM_STARTUP_CHECKS:
+            run_db_checks(self.table_name)

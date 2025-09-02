@@ -1,4 +1,5 @@
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
+from typing import Any, Callable
 
 # thanks to https://stackoverflow.com/a/45364670/10321409
 class AsyncInit(object):
@@ -19,21 +20,34 @@ class ServerSv(AsyncInit):
     ip: str
     port: int
 
-    values: dict
+    values: Any
 
     async def __init__(self, table_name: str, ip: str, port: int) -> None:
         self.ip = ip
         self.port = port
 
-    def update_values(self, new_values: dict) -> dict:
+    @abstractmethod
+    def update_values(self, new_values: Any) -> Any: pass
         # not checking if new_values has all needed values in it
-        changed_values = {}
-        for key, val in new_values.items():
-            if self.values.get(key) != val:
-                self.values[key] = val    # save to class dict
-                changed_values[key] = val  # & to returned dict
+        # changed_values = {}
+        # for key, val in new_values.items():
+        #     if self.values.get(key) != val:
+        #         self.values[key] = val    # save to class dict
+        #         changed_values[key] = val  # & to returned dict
 
-        return changed_values
+        # return changed_values
 
     @abstractmethod
     async def save_status(self): pass
+
+
+class DbUpdater:
+    func_per_field: dict[Any, Callable]
+
+    @abstractmethod
+    def __init__(self) -> None:
+        raise Exception("Called init on abstract DbUpdater.")
+    
+    @abstractmethod
+    def update_all_changed(self, values: Any, changed_fields: list[Any]):
+        raise Exception("Called update_all_changed on abstract DbUpdater.")
