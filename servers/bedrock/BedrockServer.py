@@ -10,7 +10,7 @@ from database.DbQueries import BedrockQueries
 
 from servers.Server import ServerSv
 
-from database.DbUtils import ServerType, DbUtils
+from database.DbUtils import DbUtils
 from vars.DbInstances import DBINSTANCES
 from vars.DbQueues import DBQUEUES
 from vars.Errors import ERRORS

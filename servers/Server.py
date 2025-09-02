@@ -42,11 +42,20 @@ class ServerSv(AsyncInit):
 
 
 class DbUpdater:
+    base_table_name: str
     func_per_field: dict[Any, Callable]
 
     @abstractmethod
-    def __init__(self) -> None:
+    def __init__(self, base_table_name: str) -> None:
         raise Exception("Called init on abstract DbUpdater.")
+    
+    @abstractmethod
+    def create_dbs(self) -> None:
+        raise Exception("Called create_dbs_if_not_exist on abstract DbUpdater.")
+
+    @abstractmethod
+    def load_previous_values(self) -> Any:
+        raise Exception("Called load_previous_values on abstract DbUpdater.")
     
     @abstractmethod
     def update_all_changed(self, values: Any, changed_fields: list[Any]):
