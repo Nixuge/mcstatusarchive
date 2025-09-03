@@ -190,7 +190,7 @@ class JavaValues:
         favicon = self._get_favicon(status.icon)
         if self.favicon != favicon:
             changed.append(JAVA_FIELD.favicon)
-            self.fav = favicon
+            self.favicon = favicon
 
         return changed
     
@@ -220,72 +220,86 @@ class JavaDbUpdater(DbUpdater):
         return DbUtils.table_exists(DBINSTANCES.java_instance.cursor, f"{self.base_table_name}_saves")
 
     def create_dbs(self):
-        DBQUEUES.db_queue_java.add_important_instruction(f"""
-        CREATE TABLE IF NOT EXISTS {self.base_table_name}_saves (
-            save_time INTEGER PRIMARY KEY,
-            ping INTEGER
-        );
-
-        CREATE TABLE IF NOT EXISTS {self.base_table_name}_players_on (
-            save_time INTEGER PRIMARY KEY,
-            players_on INTEGER,
-            FOREIGN KEY (save_time) REFERENCES {self.base_table_name}_saves(save_time)
-        );
-
-        CREATE TABLE IF NOT EXISTS {self.base_table_name}_players_max (
-            save_time INTEGER PRIMARY KEY,
-            players_max INTEGER,
-            FOREIGN KEY (save_time) REFERENCES {self.base_table_name}_saves(save_time)
-        );
-
-        CREATE TABLE IF NOT EXISTS {self.base_table_name}_version_protocol (
-            save_time INTEGER PRIMARY KEY,
-            version_protocol INTEGER,
-            FOREIGN KEY (save_time) REFERENCES {self.base_table_name}_saves(save_time)
-        );
-
-        CREATE TABLE IF NOT EXISTS {self.base_table_name}_version_name (
-            save_time INTEGER PRIMARY KEY,
-            version_name TEXT,
-            FOREIGN KEY (save_time) REFERENCES {self.base_table_name}_saves(save_time)
-        );
-
-        CREATE TABLE IF NOT EXISTS {self.base_table_name}_players_sample_values (
-            sample_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            sample_blob BLOB UNIQUE  -- Changed to BLOB for compressed data
-        );
-
-        CREATE TABLE IF NOT EXISTS {self.base_table_name}_players_sample_changes (
-            save_time INTEGER PRIMARY KEY,
-            sample_id INTEGER,
-            FOREIGN KEY (save_time) REFERENCES {self.base_table_name}_saves(save_time),
-            FOREIGN KEY (sample_id) REFERENCES {self.base_table_name}_players_sample_values(sample_id)
-        );
-
-        CREATE TABLE IF NOT EXISTS {self.base_table_name}_motd_values (
-            motd_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            motd_blob BLOB UNIQUE  -- Changed to BLOB for compressed data
-        );
-
-        CREATE TABLE IF NOT EXISTS {self.base_table_name}_motd_changes (
-            save_time INTEGER PRIMARY KEY,
-            motd_id INTEGER,
-            FOREIGN KEY (save_time) REFERENCES {self.base_table_name}_saves(save_time),
-            FOREIGN KEY (motd_id) REFERENCES {self.base_table_name}_motd_values(motd_id)
-        );
-
-        CREATE TABLE IF NOT EXISTS {self.base_table_name}_favicon_values (
-            favicon_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            favicon_blob BLOB UNIQUE
-        );
-
-        CREATE TABLE IF NOT EXISTS {self.base_table_name}_favicon_changes (
-            save_time INTEGER PRIMARY KEY,
-            favicon_id INTEGER,
-            FOREIGN KEY (save_time) REFERENCES {self.base_table_name}_saves(save_time),
-            FOREIGN KEY (favicon_id) REFERENCES {self.base_table_name}_favicon_values(favicon_id)
-        );
-        """)
+        queries = (
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.base_table_name}_saves (
+                save_time INTEGER PRIMARY KEY,
+                ping INTEGER
+            );
+            """,
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.base_table_name}_players_on (
+                save_time INTEGER PRIMARY KEY,
+                players_on INTEGER,
+                FOREIGN KEY (save_time) REFERENCES {self.base_table_name}_saves(save_time)
+            );
+            """,
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.base_table_name}_players_max (
+                save_time INTEGER PRIMARY KEY,
+                players_max INTEGER,
+                FOREIGN KEY (save_time) REFERENCES {self.base_table_name}_saves(save_time)
+            );
+            """,
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.base_table_name}_version_protocol (
+                save_time INTEGER PRIMARY KEY,
+                version_protocol INTEGER,
+                FOREIGN KEY (save_time) REFERENCES {self.base_table_name}_saves(save_time)
+            );
+            """,
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.base_table_name}_version_name (
+                save_time INTEGER PRIMARY KEY,
+                version_name TEXT,
+                FOREIGN KEY (save_time) REFERENCES {self.base_table_name}_saves(save_time)
+            );
+            """,
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.base_table_name}_players_sample_values (
+                sample_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sample_blob BLOB UNIQUE
+            );
+            """,
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.base_table_name}_players_sample_changes (
+                save_time INTEGER PRIMARY KEY,
+                sample_id INTEGER,
+                FOREIGN KEY (save_time) REFERENCES {self.base_table_name}_saves(save_time),
+                FOREIGN KEY (sample_id) REFERENCES {self.base_table_name}_players_sample_values(sample_id)
+            );
+            """,
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.base_table_name}_motd_values (
+                motd_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                motd_blob BLOB UNIQUE
+            );
+            """,
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.base_table_name}_motd_changes (
+                save_time INTEGER PRIMARY KEY,
+                motd_id INTEGER,
+                FOREIGN KEY (save_time) REFERENCES {self.base_table_name}_saves(save_time),
+                FOREIGN KEY (motd_id) REFERENCES {self.base_table_name}_motd_values(motd_id)
+            );
+            """,
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.base_table_name}_favicon_values (
+                favicon_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                favicon_blob BLOB UNIQUE
+            );
+            """,
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.base_table_name}_favicon_changes (
+                save_time INTEGER PRIMARY KEY,
+                favicon_id INTEGER,
+                FOREIGN KEY (save_time) REFERENCES {self.base_table_name}_saves(save_time),
+                FOREIGN KEY (favicon_id) REFERENCES {self.base_table_name}_favicon_values(favicon_id)
+            );
+            """
+        )
+        for query in queries:
+            DBQUEUES.db_queue_java.add_important_instruction(query)
     
     def load_previous_values(self) -> Optional[JavaValues]:
         if not self.dbs_exist():
@@ -407,6 +421,8 @@ class JavaDbUpdater(DbUpdater):
             return None
 
     def update_all_changed(self, values: JavaValues, changed_fields: list[JAVA_FIELD]):
+        # print(f"{self.base_table_name}: {changed_fields}")
+        # print(values)
         for changed in changed_fields:
             new_value = values[changed]
             func = self.func_per_field[changed]
@@ -416,8 +432,42 @@ class JavaDbUpdater(DbUpdater):
     def _update_simple_field(self, table_suffix: str, field_name: str, save_time: int, value: Any):
         DBQUEUES.db_queue_java.add_instuction(f"INSERT INTO {self.base_table_name}_{table_suffix} (save_time, {field_name}) VALUES (?, ?)", (save_time, value))
 
-    def _update_value_ref_field(self):
-        pass #TODO: used for values w values in a different table than the changes.
+    # How complicated field updating works:
+    # - Add the field to the values normally, then add a callback 
+    def _update_value_ref_field(self, value_table_suffix: str, change_table_suffix: str,
+                          value_field: str, id_field: str, save_time: int, value: bytes):
+        def insert_change_callback():
+            # print(f"Callback called for {self.base_table_name}_{value_table_suffix} - {save_time}")
+            def validate():
+                pass # TODO: validate each step of this process.
+                # print("ok !")
+            try:
+                # Should be called in the context of the DBQueue and not cause any issue.
+                cursor = DBQUEUES.db_queue_java.cursor
+                cursor.execute(f"""
+                    SELECT {id_field}
+                    FROM {self.base_table_name}_{value_table_suffix}
+                    WHERE {value_field} = ?
+                """, (value,))
+                result = cursor.fetchone()
+
+                if result:
+                    value_id = result[0]
+                    # Insert into the changes table
+                    insert_change_query = f"""
+                        INSERT INTO {self.base_table_name}_{change_table_suffix}
+                        (save_time, {id_field}) VALUES (?, ?)
+                    """
+                    DBQUEUES.db_queue_java.add_instuction(insert_change_query, (save_time, value_id), validate)
+                else:
+                    raise Exception("No result from fetch in callback !!")
+            except Exception as e:
+                print(f"Error in callback for {id_field}: {e}")
+
+        DBQUEUES.db_queue_java.add_instuction(
+            f"""INSERT OR IGNORE INTO {self.base_table_name}_{value_table_suffix} ({value_field}) VALUES (?)"""
+        , (value,), insert_change_callback)
+        
 
     def new_save(self, values: JavaValues, save_time: int):
         self._update_simple_field("saves", "ping", save_time, values.ping)
@@ -429,7 +479,7 @@ class JavaDbUpdater(DbUpdater):
         self._update_simple_field("players_max", "players_max", values.save_time, players_max)
 
     def players_sample_changed(self, values: JavaValues, players_sample: bytes):
-        pass
+        self._update_value_ref_field("players_sample_values", "players_sample_changes", "sample_blob", "sample_id", values.save_time, players_sample)
 
     def version_protocol_changed(self, values: JavaValues, version_protocol: int):
         self._update_simple_field("version_protocol", "version_protocol", values.save_time, version_protocol)
@@ -438,10 +488,10 @@ class JavaDbUpdater(DbUpdater):
         self._update_simple_field("version_name", "version_name", values.save_time, version_name)
 
     def motd_changed(self, values: JavaValues, motd: bytes):
-        pass
+        self._update_value_ref_field("motd_values", "motd_changes", "motd_blob", "motd_id", values.save_time, motd)
 
     def favicon_changed(self, values: JavaValues, favicon: bytes):
-        pass
+        self._update_value_ref_field("favicon_values", "favicon_changes", "favicon_blob", "favicon_id", values.save_time, favicon)
 
 
 class JavaServerSv(ServerSv):
@@ -489,7 +539,7 @@ class JavaServerSv(ServerSv):
         self.loading_steps.dns = True
 
 
-    async def load_db(self):
+    async def init_load_db(self):
         # db init
         if not self.db_updater.dbs_exist():
             self.db_updater.create_dbs()

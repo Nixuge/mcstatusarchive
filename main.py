@@ -23,7 +23,6 @@ from utils.timer import Timer
 from vars.Errors import ErrorHandler
 from vars.Frontend import FRONTEND_UPDATE_THREAD
 from vars.InvalidServers import INVALID_JAVA_SERVERS, InvalidServers
-from vars.LastValueSavers import LAST_BEDROCK_VALUES, LAST_JAVA_VALUES
 from vars.counters import SAVED_SERVERS
 
 import asyncio
@@ -121,15 +120,12 @@ async def main():
     timer = Timer()
     
     DBQUEUES.db_queue_java.start()
-    DBQUEUES.db_queue_duplicates_java.start()
     DBQUEUES.db_queue_bedrock.start()
-
-    LAST_JAVA_VALUES.start()
-    LAST_BEDROCK_VALUES.start()
 
     logging.info(f"Databases loaded. ({timer.step()})")
 
     servers = await ServersLoader("servers.json").parse()
+    # servers = await ServersLoader("z_servers/servers.json").parse()
     logging.info(f"{len(servers)} servers loaded. ({timer.end()})")
     
     try:

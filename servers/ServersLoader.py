@@ -119,13 +119,9 @@ class ServersLoader:
             logging.info(f"Done loading dns for java servers ({java_timer.step()}).")
 
             logging.info(f"Starting to init databases for java servers. (count: {len(self.java_coroutines)})")
-            await asyncio.gather(*[java_server.init_db() for java_server in all_java_servers])
+            await asyncio.gather(*[java_server.init_load_db() for java_server in all_java_servers])
             logging.info(f"Done initing databases for java servers ({java_timer.step()}).")
-
-            logging.info(f"Starting to load previous database values for java servers. (count: {len(self.java_coroutines)})")
-            await asyncio.gather(*[java_server.load_previous_values_db() for java_server in all_java_servers])
-            logging.info(f"Done loading previous database values for java servers ({java_timer.end()}).")
-
+        
             if Startup.SHOULD_PERFORM_STARTUP_CHECKS:
                 startup_timer = Timer()
                 logging.info(f"Performing startup checks for java servers. (count: {len(self.java_coroutines)})")

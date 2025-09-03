@@ -6,7 +6,7 @@ from time import time
 from typing import Any, Optional
 from mcstatus import BedrockServer
 from mcstatus.responses import BedrockStatusResponse
-from database.DbQueries import BedrockQueries
+# from database.DbQueries import BedrockQueries
 
 from servers.Server import ServerSv
 
@@ -95,7 +95,7 @@ class BedrockServerSv(ServerSv):
         await super().__init__(table_name, ip, port)
         # get non changing values
         self.server = BedrockServer.lookup(ip, port) #bedrock doesn't need/have async lookup
-        self.insert_query = BedrockQueries.get_insert_query(table_name)
+        # self.insert_query = BedrockQueries.get_insert_query(table_name)
         # create db if not present TODO
         # DBQUEUES.db_queue_bedrock.add_important_instruction(
         #     BedrockQueries.get_create_table_query(table_name)
@@ -125,4 +125,4 @@ class BedrockServerSv(ServerSv):
         changed_fields = self.values.update_using_response_get_changed(status)
 
         # TODO: USE NEW SYSTEM
-        DBQUEUES.db_queue_bedrock.add_instuction(self.insert_query, data_list)
+        # DBQUEUES.db_queue_bedrock.add_instuction(self.insert_query, data_list)
