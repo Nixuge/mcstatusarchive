@@ -33,7 +33,7 @@ from servers.bedrock.BedrockServer import BedrockServerSv
 from servers.java.JavaServer import JavaServerSv
 from servers.ServersLoader import ServersLoader
 from vars.config import Timings
-from vars.DbQueues import DBQUEUES
+from vars.DbQueues import BEDROCK_DB_QUEUES, JAVA_DB_QUEUES
 
 async def save_every_x_secs(servers: list):
     i = 1
@@ -69,7 +69,7 @@ async def run_batch_raw(servers: list[JavaServerSv | BedrockServerSv]):
     logging.info("== Done with batch ==")
 
 
-async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], try_invalid: bool = False, task_limit: int = 100):
+async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], try_invalid: bool = False, task_limit: int = 200):
     logging.info("== Starting batch ==")
     timer = Timer()
 
@@ -119,8 +119,8 @@ async def main():
 
     timer = Timer()
     
-    DBQUEUES.db_queue_java.start()
-    DBQUEUES.db_queue_bedrock.start()
+    JAVA_DB_QUEUES.start_all()
+    BEDROCK_DB_QUEUES.db_queue_bedrock.start()
 
     logging.info(f"Databases loaded. ({timer.step()})")
 
@@ -130,10 +130,12 @@ async def main():
     
     try:
         await save_every_x_secs(servers)
+        pass
     except asyncio.exceptions.CancelledError:
         ErrorHandler.should_stop = True
         logging.info("Excepting a graceful stop soon.")
 
+# 125.6M
 
 if __name__ == "__main__":
     asyncio.run(main())

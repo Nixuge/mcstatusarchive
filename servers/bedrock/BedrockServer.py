@@ -11,8 +11,8 @@ from mcstatus.responses import BedrockStatusResponse
 from servers.Server import ServerSv
 
 from database.DbUtils import DbUtils
-from vars.DbInstances import DBINSTANCES
-from vars.DbQueues import DBQUEUES
+from vars.DbInstances import BEDROCK_DB_INSTANCES
+from vars.DbQueues import BEDROCK_DB_QUEUES
 from vars.Errors import ERRORS
 from vars.config import Timings
 

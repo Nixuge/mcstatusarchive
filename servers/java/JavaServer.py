@@ -17,12 +17,11 @@ from database.DbUtils import DbUtils
 from utils.impossible import AMPASSABLE
 from utils.loading_steps import JavaLoadingSteps
 from utils.timer import CumulativeTimers
-from vars.DbInstances import DBINSTANCES
-from vars.DbQueues import DBQUEUES
+from vars.DbInstances import JAVA_DB_INSTANCES
+from vars.DbQueues import JAVA_DB_QUEUES
 from vars.Errors import ERRORS, ErrorHandler
-from vars.Frontend import FRONTEND_UPDATE_THREAD
 from vars.InvalidServers import INVALID_JAVA_SERVERS
-from vars.config import Logging, Startup, Timings
+from vars.config import Logging, Timings
 from vars.counters import SAVED_SERVERS
 
 import zstandard
@@ -217,7 +216,7 @@ class JavaDbUpdater(DbUpdater):
 
     def dbs_exist(self):
         # Technically redundant as we "create table IF NOT EXISTS" anyways but still.
-        return DbUtils.table_exists(DBINSTANCES.java_instance.cursor, f"{self.base_table_name}_saves")
+        return DbUtils.table_exists(JAVA_DB_INSTANCES[self.base_table_name].cursor, f"{self.base_table_name}_saves")
 
     def create_dbs(self):
         queries = (
@@ -299,13 +298,13 @@ class JavaDbUpdater(DbUpdater):
             """
         )
         for query in queries:
-            DBQUEUES.db_queue_java.add_important_instruction(query)
+            JAVA_DB_QUEUES[self.base_table_name].add_important_instruction(query)
     
     def load_previous_values(self) -> Optional[JavaValues]:
         if not self.dbs_exist():
             return None
         
-        cursor = DBINSTANCES.java_instance.cursor
+        cursor = JAVA_DB_INSTANCES[self.base_table_name].cursor
         try:
             # Get the latest save_time (for the save_time and ping)
             cursor.execute(f"""
@@ -430,7 +429,7 @@ class JavaDbUpdater(DbUpdater):
 
     # Used to update simple values (the ones w no ref/value things).
     def _update_simple_field(self, table_suffix: str, field_name: str, save_time: int, value: Any):
-        DBQUEUES.db_queue_java.add_instuction(f"INSERT INTO {self.base_table_name}_{table_suffix} (save_time, {field_name}) VALUES (?, ?)", (save_time, value))
+        JAVA_DB_QUEUES[self.base_table_name].add_instuction(f"INSERT INTO {self.base_table_name}_{table_suffix} (save_time, {field_name}) VALUES (?, ?)", (save_time, value))
 
     # How complicated field updating works:
     # - Add the field to the values normally, then add a callback 
@@ -443,7 +442,7 @@ class JavaDbUpdater(DbUpdater):
                 # print("ok !")
             try:
                 # Should be called in the context of the DBQueue and not cause any issue.
-                cursor = DBQUEUES.db_queue_java.cursor
+                cursor = JAVA_DB_QUEUES[self.base_table_name].cursor
                 cursor.execute(f"""
                     SELECT {id_field}
                     FROM {self.base_table_name}_{value_table_suffix}
@@ -458,13 +457,13 @@ class JavaDbUpdater(DbUpdater):
                         INSERT INTO {self.base_table_name}_{change_table_suffix}
                         (save_time, {id_field}) VALUES (?, ?)
                     """
-                    DBQUEUES.db_queue_java.add_instuction(insert_change_query, (save_time, value_id), validate)
+                    JAVA_DB_QUEUES[self.base_table_name].add_instuction(insert_change_query, (save_time, value_id), validate)
                 else:
                     raise Exception("No result from fetch in callback !!")
             except Exception as e:
                 print(f"Error in callback for {id_field}: {e}")
 
-        DBQUEUES.db_queue_java.add_instuction(
+        JAVA_DB_QUEUES[self.base_table_name].add_instuction(
             f"""INSERT OR IGNORE INTO {self.base_table_name}_{value_table_suffix} ({value_field}) VALUES (?)"""
         , (value,), insert_change_callback)
         
