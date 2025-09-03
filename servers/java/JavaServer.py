@@ -590,13 +590,13 @@ class JavaServerSv(ServerSv):
             INVALID_JAVA_SERVERS.add_server_fail(self.ip)
             if not INVALID_JAVA_SERVERS.is_invalid(self.ip): # do not log failed servers
                 if type(e) == TimeoutError:
-                    return logging.warning(f"ERRORSPLIT{self.ip}: {ERRORS.get('Timeout')}")
+                    return logging.warning(f"Error grabbing server ERRORSPLIT{self.ip}: {ERRORS.get('Timeout')}")
                 e = str(e)
                 if "[Errno 111]" or "[Errno 113]"in e: # has dynamic data in it, can't catch w ERRORS.get()
                     formated_error = ERRORS.get("ConnectCallFailed") 
                 else: 
                     formated_error = ERRORS.get(e, 'Unknown error happened ' + e)
-                logging.warn(f"ERRORSPLIT{self.ip}: {formated_error}")
+                logging.warning(f"Error grabbing server ERRORSPLIT{self.ip}: {formated_error}")
             return
         
         return status

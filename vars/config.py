@@ -28,7 +28,7 @@ class Configurator:
             return default_value
         
         if type(value) != type(default_value):
-            logging.warn(f"Key for config '{key}' of wrong type! ({type(value)}, excepted {type(default_value)})")
+            logging.warning(f"Key for config '{key}' of wrong type! ({type(value)}, excepted {type(default_value)})")
             return default_value
         
         return value
@@ -50,5 +50,6 @@ class Timings:
     DNS_TIMEOUT = Configurator.get_value("dns_timeout", 20)
 
 class Logging:
+    # LOG_FAILED_SERVER_GRABS = Configurator.get_value("log_failed_server_grabs", False)
     LOG_DNS_TIMEOUT = Configurator.get_value("log_dns_timeout", False)
     LOG_DNS_ERROR = Configurator.get_value("log_dns_error", True)

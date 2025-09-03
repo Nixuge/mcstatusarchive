@@ -119,8 +119,10 @@ async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], try_inv
 async def main():
     logging.info("Starting.")
 
-    signal.signal(signal.SIGTERM, handle_sigterm)
-    logging.info("Registered SIGTERM.")
+    signal.signal(signal.SIGTERM, handle_exit_signal)
+    signal.signal(signal.SIGINT, handle_exit_signal) # Registered for vscode exits but doesn't seem to work lmao
+
+    logging.info("Registered SIGTERM and SIGINT.")
 
     FRONTEND_UPDATE_THREAD.start()
 
@@ -142,7 +144,7 @@ async def main():
         ErrorHandler.should_stop = True
         logging.info("Excepting a graceful stop soon.")
 
-def handle_sigterm(signum, frame):
+def handle_exit_signal(signum, frame):
     ErrorHandler.should_stop = True
     logging.info("SIGTERM received, stopping program. Excepting a graceful stop soon.")
 
