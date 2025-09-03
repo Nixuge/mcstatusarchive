@@ -120,7 +120,7 @@ async def main():
     timer = Timer()
     
     JAVA_DB_QUEUES.start_all()
-    BEDROCK_DB_QUEUES.db_queue_bedrock.start()
+    # BEDROCK_DB_QUEUES.db_queue_bedrock.start()
 
     logging.info(f"Databases loaded. ({timer.step()})")
 

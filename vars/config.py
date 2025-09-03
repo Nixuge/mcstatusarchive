@@ -46,7 +46,7 @@ class Startup:
 
 class Timings:
     SERVER_TIMEOUT = Configurator.get_value("server_timeout", 25)
-    SAVE_EVERY = Configurator.get_value("save_every", 120)
+    SAVE_EVERY = Configurator.get_value("save_every", 180)
     DNS_TIMEOUT = Configurator.get_value("dns_timeout", 20)
 
 class Logging:

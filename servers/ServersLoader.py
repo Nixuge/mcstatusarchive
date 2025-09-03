@@ -103,10 +103,11 @@ class ServersLoader:
         all_java_servers = []
         logging.info("Done getting the IPs and table names out of the servers.json file.")
         try:
-            bedrock_timer = Timer()
-            logging.info(f"Starting to load bedrock servers. (count: {len(self.bedrock_coroutines)})")
-            all_bedrock_servers = await self._load_servers("Bedrock", self.bedrock_coroutines)
-            logging.info(f"Done loading bedrock servers ({bedrock_timer.end()}).")
+            # TODO: RE ENABLE
+            # bedrock_timer = Timer()
+            # logging.info(f"Starting to load bedrock servers. (count: {len(self.bedrock_coroutines)})")
+            # all_bedrock_servers = await self._load_servers("Bedrock", self.bedrock_coroutines)
+            # logging.info(f"Done loading bedrock servers ({bedrock_timer.end()}).")
 
             # for timer_key in timers:
             #     times = CumulativeTimers.get_timer(timer_key).stop()
