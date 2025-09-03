@@ -81,7 +81,7 @@ class ServersLoader:
 
     async def _load_servers(self, server_type: str, coroutines: list[Coroutine]) -> List:
         server_objects = []
-        chunks = [coroutines[x:x+200] for x in range(0, len(coroutines), 200)]
+        chunks = [coroutines[x:x+300] for x in range(0, len(coroutines), 300)]
         logging.info(f"Got {len(coroutines)} {server_type} servers. Splitting DNS resolution tasks in {len(chunks)} chunk(s) to ease the file descriptor limit (Socket requests count as open files).")
         for i, chunk in enumerate(chunks):
             loaded_servers = await asyncio.gather(*chunk)
@@ -89,8 +89,8 @@ class ServersLoader:
             if i+1 == len(chunks):
                 logging.info("Done processing all chunks!")
             else:
-                logging.info(f"Done processing chunk {i+1}/{len(chunks)}. Waiting 0.2s.")
-                await asyncio.sleep(0.2)
+                logging.info(f"Done processing chunk {i+1}/{len(chunks)}. Waiting 0.1s.")
+                await asyncio.sleep(0.1)
         
         return server_objects
 

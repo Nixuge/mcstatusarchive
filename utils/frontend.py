@@ -21,6 +21,7 @@ class FrontendUpdater(Thread):
         self.updates = []
         self.is_running = False
         self.loop = asyncio.get_event_loop()
+        self.daemon = True
     
     def add_update(self, table_name: str, update: dict):
         # Avoid growing the list infinitely if the update thread is dead

@@ -69,7 +69,7 @@ async def run_batch_raw(servers: list[JavaServerSv | BedrockServerSv]):
     logging.info("== Done with batch ==")
 
 
-async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], try_invalid: bool = False, task_limit: int = 200):
+async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], try_invalid: bool = False, task_limit: int = 100):
     logging.info("== Starting batch ==")
     timer = Timer()
 
@@ -134,6 +134,12 @@ async def main():
     except asyncio.exceptions.CancelledError:
         ErrorHandler.should_stop = True
         logging.info("Excepting a graceful stop soon.")
+
+# import multiprocessing
+# proc = multiprocessing.Process(target=your_proc_function, args=())
+# proc.start()
+# # Terminate the process
+# proc.terminate()  # sends a SIGTERM
 
 # 125.6M
 
