@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "Python: Main File",
             "type": "python",
             "request": "launch",
-            "program": "main.py",
+            "program": "src/main.py",
             // "args": ["maintenance"],
             "console": "integratedTerminal",
             "justMyCode": true

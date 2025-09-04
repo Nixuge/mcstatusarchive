@@ -3,13 +3,11 @@ from database.DbInstance import DbInstance
 ALL_DB_NAMES = "_abcdefghijklmnopqrstuvwxyz"
 
 class JavaDbInstances:
-    # db: DbInstance
     dbs: dict[str, DbInstance]
     def __init__(self) -> None:
         self.dbs = {}
         for name in ALL_DB_NAMES:
-            self.dbs[name] = DbInstance(f"z_DBs/{name}.sqlite3")
-        # self.db = DbInstance(f"z_DBs/GENERAL.sqlite")
+            self.dbs[name] = DbInstance(f"z_DBs/java-{name}.sqlite3")
     
     def __getitem__(self, name: str) -> DbInstance:
         if name.startswith("mc_"):
