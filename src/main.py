@@ -23,7 +23,6 @@ from utils.timer import Timer
 from vars.Errors import ErrorHandler
 from vars.Frontend import FRONTEND_UPDATE_THREAD
 from vars.InvalidServers import INVALID_JAVA_SERVERS, InvalidServers
-from vars.LastValueSavers import LAST_BEDROCK_VALUES, LAST_JAVA_VALUES
 from vars.counters import SAVED_SERVERS
 
 import asyncio
@@ -34,7 +33,7 @@ from servers.bedrock.BedrockServer import BedrockServerSv
 from servers.java.JavaServer import JavaServerSv
 from servers.ServersLoader import ServersLoader
 from vars.config import Timings
-from vars.DbQueues import DBQUEUES
+from vars.DbQueues import BEDROCK_DB_QUEUES, JAVA_DB_QUEUES
 
 async def save_every_x_secs(servers: list):
     i = 1
@@ -54,7 +53,11 @@ async def save_every_x_secs(servers: list):
         
         start_time = int(time())
         await run_batch_limit(servers, try_invalid)
-
+        
+        if ErrorHandler.should_stop:
+            logging.info("Main thread: stopped save every x task")
+            return
+        
         logging.info("[Waiting for timer to finish...]")
         while start_time + Timings.SAVE_EVERY > int(time()):
             await asyncio.sleep(.01)
@@ -116,42 +119,37 @@ async def run_batch_limit(servers: list[JavaServerSv | BedrockServerSv], try_inv
 async def main():
     logging.info("Starting.")
 
+    signal.signal(signal.SIGTERM, handle_exit_signal)
+    signal.signal(signal.SIGINT, handle_exit_signal) # Registered for vscode exits but doesn't seem to work lmao
+
+    logging.info("Registered SIGTERM and SIGINT.")
+
     FRONTEND_UPDATE_THREAD.start()
 
     timer = Timer()
     
-    DBQUEUES.db_queue_java.start()
-    DBQUEUES.db_queue_duplicates_java.start()
-    DBQUEUES.db_queue_bedrock.start()
-
-    LAST_JAVA_VALUES.start()
-    LAST_BEDROCK_VALUES.start()
+    JAVA_DB_QUEUES.start_all()
+    # BEDROCK_DB_QUEUES.db_queue_bedrock.start()
 
     logging.info(f"Databases loaded. ({timer.step()})")
 
     servers = await ServersLoader("servers.json").parse()
+    # servers = await ServersLoader("z_servers/servers.json").parse()
     logging.info(f"{len(servers)} servers loaded. ({timer.end()})")
     
     try:
         await save_every_x_secs(servers)
+        pass
     except asyncio.exceptions.CancelledError:
         ErrorHandler.should_stop = True
         logging.info("Excepting a graceful stop soon.")
 
+def handle_exit_signal(signum, frame):
+    ErrorHandler.should_stop = True
+    logging.info("SIGTERM received, stopping program. Excepting a graceful stop soon.")
 
 if __name__ == "__main__":
     asyncio.run(main())
 
-# IMPORTANT NOTE:
-# for absolutely NO REASON, this program is having issues,
-# BUT ONLY if starting from a non-vscode terminal.
-# - if starting on kitty or a service, i get "DNS lookup failed" errors, then for
-#   ABSOLUTELY NO REASON an "sqlite3.OperationalError: unable to open database file"
-#   errors, not even when connecting to the db but when executing something on the cursor
-#   on _process_important_instructions for z_java_servers.db
-# 
-# - if starting on vscode (even a screen through vscode), there is NOT A SINGLE ISSUE,
-#   some DNS lookups timeout 1x but do complete the 2nd try, and it starts up JUST FINE.
-# 
-# I do not have any idea why this is happening. It does not make any sense. That's just how it is.
-# This will not be running on a screen started through vscode instead of a service.
+
+logging.info("Goodbye (:")

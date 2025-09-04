@@ -1,4 +1,7 @@
 httpx
-bson
 mcstatus
 pyjson5
+zstandard==0.24.0
+
+# zstandard version specified as the output can change between versions.
+# This would cause all of our entries to simply be archived multiple times (which would obv be a problem)

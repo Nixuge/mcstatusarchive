@@ -1,7 +1,8 @@
 import logging
-from logging import Logger, config
 from datetime import datetime
 import os
+
+from vars.dirty_logging_config import LOG_FAILED_SERVER_GRABS
 
 def get_proper_logger(logger: logging.Logger, debugConsole: bool):
     logger.setLevel(logging.DEBUG)
@@ -22,7 +23,7 @@ def get_proper_logger(logger: logging.Logger, debugConsole: bool):
     if not os.path.exists("logs/"): os.mkdir("logs/")
 
     now = datetime.now()
-    dt_string = now.strftime("%d-%m-%Y_%H.%M.%S")
+    dt_string = now.strftime("%Y-%m-%d_%H.%M.%S")
 
     fh = logging.FileHandler(f"logs/{dt_string}.log")
     fh.addFilter(FilterSocketExceptions())
@@ -53,8 +54,10 @@ def _get_correctly(prefix: str) -> str:
 
 class FilterSocketExceptions(logging.Filter):
     def filter(self, record):
-        # This shouldn't match any other error message (I hope)
-        return not "raised exception." in record.getMessage()
+        if not LOG_FAILED_SERVER_GRABS and "ERRORSPLIT" in record.getMessage():
+            return False
+        return not "raised exception." in record.getMessage() # This shouldn't match any other error message (I hope)
+
 
 class CustomFormatterConsole(logging.Formatter):
     FORMATS = {
@@ -81,6 +84,13 @@ class CustomFormatterFile(logging.Formatter):
 
     def format(self, record):
         formatter = logging.Formatter(self.format_)
-        return formatter.format(record).replace(".py", "")
+        result = formatter.format(record).replace(".py", "")
+
+        if "ERRORSPLIT" in result:
+            return result.replace("ERRRORSPLIT", "")
+        
+        return result
 
 #thanks https://stackoverflow.com/a/56944275 & https://stackoverflow.com/a/287944
+# Note: special case "ERRORSPLIT is meant so that it doesn't log a full line for no reason when
+# an errer fails to gets saved.

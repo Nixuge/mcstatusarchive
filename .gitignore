@@ -6,4 +6,6 @@ info.txt
 logs/
 config.json
 *.bson
-venv/
+.venv/
+
+z_DBs/
