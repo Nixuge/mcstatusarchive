@@ -6,6 +6,7 @@ from time import time
 from typing import Any
 import dns.resolver
 from mcstatus import JavaServer
+from mcstatus.responses.forge import ForgeData
 from mcstatus.responses import JavaStatusResponse, JavaStatusPlayer
 
 from servers.base import ServerSv
@@ -76,13 +77,6 @@ class JavaServerSv(ServerSv):
         return status
 
     def get_values_dict(self, status: JavaStatusResponse) -> dict[str, Any]:
-        # TODO:
-        # - status.enforces_secure_chat
-        # - status.forge_data, which itself has:
-        # --- status.forge_data.fml_network_version
-        # --- status.forge_data.channels
-        # --- status.forge_data.mods
-        # --- status.forge_data.truncated
         return {
             "players_on": status.players.online,
             "players_max": status.players.max,
@@ -91,7 +85,9 @@ class JavaServerSv(ServerSv):
             "version_protocol": status.version.protocol,
             "version_name": status.version.name,
             "motd": self._parse_motd(status),
-            "favicon": self._get_favicon(status.icon)
+            "favicon": self._get_favicon(status.icon),
+            "enforces_secure_chat": self._optbool_to_int(status.enforces_secure_chat),
+            **self._get_forge_data(status.forge_data),
         }
 
     @staticmethod
@@ -114,3 +110,33 @@ class JavaServerSv(ServerSv):
         # Player order can vary so just in case sort so that it's always the same order
         player_ids.sort()
         return ",".join(str(p_id) for p_id in player_ids)
+
+    @staticmethod
+    def _optbool_to_int(val: bool | None) -> int:
+        if val is None:
+            return -1
+        return 1 if val else 0
+
+    @staticmethod
+    def _get_forge_data(forge_data: ForgeData | None) -> dict[str, Any]:
+        if forge_data is None:
+            return {
+                "forge_fml_network_version": -1,
+                "forge_truncated": -1,
+                "forge_channels": "",
+                "forge_mods": "",
+            }
+        
+        channels: list[dict[str, Any]] = [{"name": c.name, "version": c.version, "required": c.required} for c in forge_data.channels]
+        mods = [{"name": m.name, "marker": m.marker} for m in forge_data.mods]
+        
+        # Same as player sample
+        channels.sort(key=lambda channel: channel["name"])
+        mods.sort(key=lambda mod: mod["name"])
+        
+        return {
+            "forge_fml_network_version": forge_data.fml_network_version,
+            "forge_truncated": 1 if forge_data.truncated else 0,
+            "forge_channels": json.dumps(channels, ensure_ascii=False, separators=(",", ":")),
+            "forge_mods": json.dumps(mods, ensure_ascii=False, separators=(",", ":")),
+        }

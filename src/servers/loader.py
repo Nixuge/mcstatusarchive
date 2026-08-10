@@ -39,7 +39,7 @@ class ServersLoader:
         self.db_java = db_java
         self.db_bedrock = db_bedrock
         with open(self.file_name, 'r') as file:
-            self.data = json.load(file)
+            self.data = json.load(file) # pyright: ignore[reportArgumentType]
 
         self.java_servers: list[JavaServerSv] = []
         self.bedrock_servers: list[BedrockServerSv] = []

@@ -101,7 +101,7 @@ class Database:
             (server_id, server_id),
         ).fetchall()
         for field_id, value in rows:
-            col = METRIC_FIELD_NAMES.get(field_id)
+            col = METRIC_FIELD_NAMES.get(self.server_type, {}).get(field_id)
             if col:
                 values[col] = value
 

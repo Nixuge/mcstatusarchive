@@ -40,6 +40,7 @@ class ServerSv(ABC):
 
     def save_changes(self, timestamp: int, changed_values: dict[str, Any]):
         batch = []
+        metric_fields = METRIC_FIELDS.get(self.db.server_type, {})
         text_fields = TEXT_FIELDS.get(self.db.server_type, {})
 
         # Always insert a heartbeat
@@ -50,8 +51,8 @@ class ServerSv(ABC):
                 ErrorHandler.add_error(ErrorKey.SAVE_VALUE_NULL, {"data": changed_values, "key": key})
                 continue
             
-            if key in METRIC_FIELDS:
-                field_id = METRIC_FIELDS[key]
+            if key in metric_fields:
+                field_id = metric_fields[key]
                 batch.append((
                     "INSERT INTO metric_changes VALUES (?, ?, ?, ?)",
                     (self.server_id, field_id, timestamp, val),
