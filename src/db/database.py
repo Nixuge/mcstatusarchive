@@ -1,3 +1,4 @@
+import json
 import logging
 import sqlite3
 from typing import Any
@@ -7,6 +8,8 @@ from db.schema import (
     DB_FORMAT_VERSION,
     METRIC_FIELD_NAMES,
     TEXT_FIELD_NAMES,
+    METRIC_FIELDS,
+    TEXT_FIELDS,
 )
 from db.writer import DbWriter, TextDeduplicator, PlayerDeduplicator
 
@@ -63,6 +66,24 @@ class Database:
                     f"DB server type mismatch: file has '{row[0]}', "
                     f"code expects '{self.server_type}'"
                 )
+
+        row = self.cursor.execute(
+            "SELECT value FROM db_meta WHERE key = 'metric_fields'"
+        ).fetchone()
+        if row is None:
+            self.cursor.execute(
+                "INSERT INTO db_meta (key, value) VALUES ('metric_fields', ?)",
+                (json.dumps(METRIC_FIELDS.get(self.server_type, {})),),
+            )
+
+        row = self.cursor.execute(
+            "SELECT value FROM db_meta WHERE key = 'text_fields'"
+        ).fetchone()
+        if row is None:
+            self.cursor.execute(
+                "INSERT INTO db_meta (key, value) VALUES ('text_fields', ?)",
+                (json.dumps(TEXT_FIELDS.get(self.server_type, {})),),
+            )
 
         self.conn.commit()
 
