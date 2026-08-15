@@ -92,9 +92,23 @@ class JavaServerSv(ServerSv):
 
     @staticmethod
     def _get_favicon(favicon: str | None) -> bytes:
-        if favicon:
-            return base64.decodebytes(bytes(favicon.split(',')[-1], "ascii"))
-        return b"" # The db format doesnt handle nulls, this is fine tbh.
+        if not favicon:
+            return b""
+        try:
+            raw_b64 = favicon.split(",")[-1].strip()
+            missing_padding = len(raw_b64) % 4
+            if missing_padding:
+                raw_b64 += "=" * (4 - missing_padding)
+            return base64.b64decode(raw_b64)
+        except Exception as e:
+            ErrorHandler.add_error(ErrorKey.FAVICON_DECODE_FAIL, {"Exception": str(e), "data": favicon})
+            return favicon.encode()
+        # if favicon:
+        #     try:
+        #         return base64.decodebytes(bytes(favicon.split(',')[-1], "ascii"))
+        #     except:
+                
+        # return b"" # The db format doesnt handle nulls, this is fine tbh.
 
     def _get_player_sample(self, sample: list[JavaStatusPlayer] | None) -> str:
         if sample is None:
