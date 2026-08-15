@@ -4,9 +4,10 @@ from time import time
 from mcstatus import BedrockServer
 from mcstatus.responses import BedrockStatusResponse
 
-from servers.base import ServerSv
+from servers.base import ServerSv, PollResult
 from db.database import Database
 from config import Timings
+from utils.errors import ErrorHandler, ErrorKey
 
 class BedrockServerSv(ServerSv):
     server: BedrockServer
@@ -17,30 +18,42 @@ class BedrockServerSv(ServerSv):
     async def async_init(self):
         self.server = BedrockServer.lookup(self.ip, self.port)
 
-    async def save_status(self):
+    async def save_status(self) -> PollResult:
+        if not self.server:
+            return PollResult.OTHER_FAIL
+
+        status = await self._perform_status()
+        if status is None:
+            self.rater.report_down()
+            return PollResult.FAIL
+
+        try:
+            data = self.get_values_dict(status)
+            changed = self.update_values(data)
+
+            self.rater.report_success(status.players.online)
+
+            timestamp = int(time())
+            self.save_changes(timestamp, changed)
+            return PollResult.SUCCESS
+        except Exception as e:
+            ErrorHandler.add_error(ErrorKey.SAVE_EXCEPTION, {"type": "bedrock", "ip": self.ip, "exception": str(e)})
+            return PollResult.OTHER_FAIL
+
+    async def _perform_status(self) -> BedrockStatusResponse | None:
         try:
             async with asyncio.timeout(Timings.SERVER_TIMEOUT):
-                status = await self.server.async_status()
+                return await self.server.async_status()
         except TimeoutError:
             logging.warning(f"ERRORSPLIT{self.ip}: Timeout")
-            self.rater.report_down()
-            return
+            return None
         except Exception as e:
             e_str = str(e)
             if "[Errno 111]" in e_str:
                 logging.warning(f"ERRORSPLIT{self.ip}: ConnectCallFailed")
             else:
                 logging.warning(f"ERRORSPLIT{self.ip}: Unknown error happened {e_str}")
-            self.rater.report_down()
-            return
-
-        data = self.get_values_dict(status)
-        changed = self.update_values(data)
-
-        self.rater.report_success(status.players.online)
-
-        timestamp = int(time())
-        self.save_changes(timestamp, changed)
+            return None
 
     def get_values_dict(self, status: BedrockStatusResponse) -> dict:
         # Note: pretty sure the _parse_motd for bedrock isn't required

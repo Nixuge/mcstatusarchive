@@ -9,7 +9,7 @@ from mcstatus import JavaServer
 from mcstatus.responses.forge import ForgeData
 from mcstatus.responses import JavaStatusResponse, JavaStatusPlayer
 
-from servers.base import ServerSv
+from servers.base import ServerSv, PollResult
 from db.database import Database
 from utils.errors import ErrorHandler, ErrorKey
 from config import Timings, LoggingConfig, McConfig
@@ -42,22 +42,27 @@ class JavaServerSv(ServerSv):
         if not success:
             ErrorHandler.add_error(ErrorKey.DNS_LOOKUP, {"server": self.ip, "port": self.port})
 
-    async def save_status(self):
+    async def save_status(self) -> PollResult:
         if not self.server:
-            return
+            return PollResult.OTHER_FAIL
 
         status = await self._perform_status()
         if status is None:
             self.rater.report_down()
-            return
+            return PollResult.FAIL
 
-        data = self.get_values_dict(status)
-        changed = self.update_values(data)
+        try:
+            data = self.get_values_dict(status)
+            changed = self.update_values(data)
 
-        self.rater.report_success(status.players.online)
+            self.rater.report_success(status.players.online)
 
-        timestamp = int(time())
-        self.save_changes(timestamp, changed)
+            timestamp = int(time())
+            self.save_changes(timestamp, changed)
+            return PollResult.SUCCESS
+        except Exception as e:
+            ErrorHandler.add_error(ErrorKey.SAVE_EXCEPTION, {"type": "java", "ip": self.ip, "exception": str(e)})
+            return PollResult.OTHER_FAIL
 
     async def _perform_status(self) -> JavaStatusResponse | None:
         try:
@@ -118,9 +123,9 @@ class JavaServerSv(ServerSv):
 
         player_ids: list[int] = []
         for player in sample:
-            logging.info(f"Starting player dedup thing ({time_ns()})")
+            # logging.info(f"Starting player dedup thing ({time_ns()})")
             p_id = self.db.player_dedup.get_or_create(player.name, player.id)
-            logging.info(f"Done player dedup thing ({time_ns()})")
+            # logging.info(f"Done player dedup thing ({time_ns()})")
             player_ids.append(p_id)
 
         # Player order can vary so just in case sort so that it's always the same order

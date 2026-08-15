@@ -12,6 +12,14 @@ from config import RaterConfig
 from utils.errors import ErrorHandler, ErrorKey
 from utils.rater import ServerRater
 
+from enum import Enum, auto
+
+class PollResult(Enum):
+    SUCCESS = auto()
+    FAIL = auto()
+    SKIP = auto()
+    OTHER_FAIL = auto()
+
 class ServerSv(ABC):
     server_id: int
     ip: str
@@ -61,9 +69,9 @@ class ServerSv(ABC):
                 ))
             elif key in text_fields:
                 field_id = text_fields[key]
-                logging.info(f"Starting text dedup thing ({time.time_ns()})")
+                # logging.info(f"Starting text dedup thing ({time.time_ns()})")
                 value_id = self.db.text_dedup.get_or_create(val)
-                logging.info(f"Done text dedup thing ({time.time_ns()})")
+                # logging.info(f"Done text dedup thing ({time.time_ns()})")
                 batch.append((
                     "INSERT INTO text_changes VALUES (?, ?, ?, ?)",
                     (self.server_id, field_id, timestamp, value_id),
@@ -77,10 +85,10 @@ class ServerSv(ABC):
     def load_previous_values(self):
         self.values = self.db.load_previous_values(self.server_id)
 
-    async def poll_and_save(self):
+    async def poll_and_save(self) -> PollResult:
         if not self.rater.should_poll():
-            return
-        await self.save_status()
+            return PollResult.SKIP
+        return await self.save_status()
 
     @staticmethod
     def _parse_motd(status: JavaStatusResponse | BedrockStatusResponse) -> str:
@@ -100,4 +108,4 @@ class ServerSv(ABC):
     async def async_init(self): pass
 
     @abstractmethod
-    async def save_status(self): pass
+    async def save_status(self) -> PollResult: pass

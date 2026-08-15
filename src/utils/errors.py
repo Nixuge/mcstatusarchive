@@ -54,7 +54,8 @@ class ErrorKey(Enum):
     SAVE_VALUE_NULL = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
     DEDUPER_LASTROWID_NULL = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
     DEDUPER_GET_EXCEPTION = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
-    FAVICON_DECODE_FAIL = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_WARN]
+    FAVICON_DECODE_FAIL = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_WARN],
+    SAVE_EXCEPTION = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR]
     
 
 class ErrorHandler:
