@@ -2,7 +2,7 @@ import asyncio
 import base64
 import json
 import logging
-from time import time
+from time import time, time_ns
 from typing import Any
 import dns.resolver
 from mcstatus import JavaServer
@@ -104,7 +104,9 @@ class JavaServerSv(ServerSv):
 
         player_ids: list[int] = []
         for player in sample:
+            logging.info(f"Starting player dedup thing ({time_ns()})")
             p_id = self.db.player_dedup.get_or_create(player.name, player.id)
+            logging.info(f"Done player dedup thing ({time_ns()})")
             player_ids.append(p_id)
 
         # Player order can vary so just in case sort so that it's always the same order

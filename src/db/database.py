@@ -23,6 +23,7 @@ class Database:
         self.cursor = self.conn.cursor()
         self.cursor.execute("PRAGMA journal_mode=WAL;")
         self.cursor.execute("PRAGMA synchronous=NORMAL;")
+        self.cursor.execute("PRAGMA busy_timeout=5000;")
 
         self.cursor.executescript(CREATE_SCHEMA_SQL)
         self.conn.commit()
@@ -32,8 +33,8 @@ class Database:
 
         self.writer = DbWriter(db_path, should_stop_func)
 
-        self.text_dedup = TextDeduplicator(self.cursor, self.writer)
-        self.player_dedup = PlayerDeduplicator(self.cursor, self.writer)
+        self.text_dedup = TextDeduplicator(self.cursor)
+        self.player_dedup = PlayerDeduplicator(self.cursor)
 
     def _ensure_meta(self):
         row = self.cursor.execute(

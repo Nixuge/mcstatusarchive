@@ -51,7 +51,10 @@ class ErrorKey(Enum):
     CACHE_OVERFLOW_TEXT = [ErrorAction.LOG_ERROR, ErrorAction.ERROR_FILE, ErrorAction.WEBHOOK_WARN]
     CACHE_OVERFLOW_PLAYER = [ErrorAction.LOG_ERROR, ErrorAction.ERROR_FILE, ErrorAction.WEBHOOK_WARN]
     TEXT_DEDUP_BAD_TYPE = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_WARN]
-    SAVE_VALUE_NULL = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR]
+    SAVE_VALUE_NULL = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
+    DEDUPER_LASTROWID_NULL = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
+    DEDUPER_GET_EXCEPTION = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
+    
 
 class ErrorHandler:
     # _error_file_path = "/home/nix/"

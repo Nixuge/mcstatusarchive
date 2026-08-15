@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 import json
+import logging
+import time
 from typing import Any
 
 from mcstatus.responses import BedrockStatusResponse, JavaStatusResponse
@@ -59,7 +61,9 @@ class ServerSv(ABC):
                 ))
             elif key in text_fields:
                 field_id = text_fields[key]
+                logging.info(f"Starting text dedup thing ({time.time_ns()})")
                 value_id = self.db.text_dedup.get_or_create(val)
+                logging.info(f"Done text dedup thing ({time.time_ns()})")
                 batch.append((
                     "INSERT INTO text_changes VALUES (?, ?, ?, ?)",
                     (self.server_id, field_id, timestamp, value_id),

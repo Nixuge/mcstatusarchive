@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import sqlite3
+from collections import OrderedDict
 from threading import Thread
 import threading
 from time import sleep
@@ -8,29 +9,40 @@ from time import sleep
 from utils.errors import ErrorHandler, ErrorKey
 
 
-# VERY ROUGH ESTIMATION, may have been hallucinated, TO BE UPDATED IF DOESNT FIT REAL USE.
-# Estimated per-entry memory cost in bytes (Python dict overhead + key + value)
-_TEXT_ENTRY_BYTES = 200    # 64-char hex string key + int value + dict overhead
-_PLAYER_ENTRY_BYTES = 300  # (name, uuid) tuple key + int value + dict overhead
-_CACHE_WARN_BYTES = 500 * 1024 * 1024  # 500 MB
-
-
 class TextDeduplicator:
-    def __init__(self, cursor: sqlite3.Cursor, writer: DbWriter):
-        self._cache: dict[str, int] = {}   # hash_hex -> text_value_id
-        self._next_id: int = 1
-        self._writer: DbWriter = writer
-        self._warned: bool = False
-        self._load_from_db(cursor)
+    CACHE_INITIAL_LOAD_MAX = 50_000
+    CACHE_MAX = 500_000
+    EVICT_COUNT = 10_000
 
-    def _load_from_db(self, cursor: sqlite3.Cursor):
-        cursor.execute("SELECT id, hash FROM text_values;")
-        for row_id, row_hash in cursor.fetchall():
+    def __init__(self, cursor: sqlite3.Cursor):
+        self._cursor = cursor
+        self._conn = cursor.connection
+        self._cache: OrderedDict[str, int] = OrderedDict()  # hash_hex -> id
+        self._load_initial_cache()
+
+    def _load_initial_cache(self):
+        count = self._cursor.execute("SELECT COUNT(*) FROM text_values").fetchone()[0]
+        if count <= self.CACHE_INITIAL_LOAD_MAX:
+            self._cursor.execute("SELECT id, hash FROM text_values ORDER BY id;")
+        else:
+            self._cursor.execute(
+                "SELECT id, hash FROM text_values ORDER BY id DESC LIMIT ?;",
+                (self.CACHE_INITIAL_LOAD_MAX,),
+            )
+
+        # reversed() so that oldest entries end up at the front of the
+        # OrderedDict and get evicted first by popitem(last=False).
+        for row_id, row_hash in reversed(self._cursor.fetchall()):
             hash_hex = row_hash.hex() if isinstance(row_hash, bytes) else row_hash
             self._cache[hash_hex] = row_id
-            if row_id >= self._next_id:
-                self._next_id = row_id + 1
-        logging.info(f"TextDeduplicator: loaded {len(self._cache)} cached text values.")
+
+        if count <= self.CACHE_INITIAL_LOAD_MAX:
+            logging.info(f"TextDeduplicator: loaded all {len(self._cache)} text values into cache.")
+        else:
+            logging.info(
+                f"TextDeduplicator: {count} text values in DB, "
+                f"loaded {len(self._cache)} most recent into cache."
+            )
 
     def get_or_create(self, content) -> int:
         if isinstance(content, str):
@@ -38,92 +50,122 @@ class TextDeduplicator:
         elif isinstance(content, bytes):
             content_bytes = content
         else:
+            ErrorHandler.add_warn(ErrorKey.TEXT_DEDUP_BAD_TYPE, {"cache": "TextDeduplicator"})
             content_bytes = str(content).encode("utf-8")
 
         hash_hex = hashlib.sha256(content_bytes).hexdigest()
 
         cached_id = self._cache.get(hash_hex)
         if cached_id is not None:
+            self._cache.move_to_end(hash_hex)
             return cached_id
 
-        new_id = self._next_id
-        self._next_id += 1
-        self._cache[hash_hex] = new_id
+        try:
+            hash_bytes = bytes.fromhex(hash_hex)
+            row = self._cursor.execute(
+                "SELECT id FROM text_values WHERE hash = ?", (hash_bytes,)
+            ).fetchone()
+            if row:
+                self._cache[hash_hex] = row[0]
+                self._evict_if_needed()
+                return row[0]
 
-        self._check_cache_size()
 
-        hash_bytes = bytes.fromhex(hash_hex)
-        
-        if isinstance(content, (str, bytes)): 
-            db_content = content
-        else:
-            ErrorHandler.add_warn(ErrorKey.TEXT_DEDUP_BAD_TYPE, {"cache": "TextDeduplicator"})
-            db_content = str(content)
-
-        self._writer.queue(
-            "INSERT OR IGNORE INTO text_values (id, hash, content) VALUES (?, ?, ?)",
-            (new_id, hash_bytes, db_content),
-        )
-        return new_id
-
-    def _check_cache_size(self):
-        if self._warned:
-            return
-        
-        estimated = len(self._cache) * _TEXT_ENTRY_BYTES
-        if estimated >= _CACHE_WARN_BYTES:
-            self._warned = True
-            ErrorHandler.add_warn(
-                ErrorKey.CACHE_OVERFLOW_TEXT,
-                {"cache": "TextDeduplicator", "entries": len(self._cache), "estimated_mb": estimated // (1024 * 1024)},
+            db_content = content if isinstance(content, (str, bytes)) else str(content)
+            self._cursor.execute(
+                "INSERT INTO text_values (hash, content) VALUES (?, ?)",
+                (hash_bytes, db_content),
             )
+            self._conn.commit()
+            new_id = self._cursor.lastrowid
+            if not new_id:
+                ErrorHandler.add_error(ErrorKey.DEDUPER_LASTROWID_NULL, {"cache": "TextDeduplicator"})
+                return -1
+            
+            self._cache[hash_hex] = new_id
+            self._evict_if_needed()
+            return new_id
+        except Exception as e:
+            ErrorHandler.add_error(ErrorKey.DEDUPER_GET_EXCEPTION, {"cache": "TextDeduplicator", "exception": str(e)})
+            return -1
+    
+    def _evict_if_needed(self):
+        if len(self._cache) > self.CACHE_MAX:
+            for _ in range(self.EVICT_COUNT):
+                self._cache.popitem(last=False)
 
 
 class PlayerDeduplicator:
-    def __init__(self, cursor: sqlite3.Cursor, writer: "DbWriter"):
-        self._cache: dict[tuple[str, str], int] = {}  # (name, uuid) -> player_id
-        self._next_id: int = 1
-        self._writer: DbWriter = writer
-        self._warned: bool = False
-        self._load_from_db(cursor)
+    CACHE_INITIAL_LOAD_MAX = 50_000
+    CACHE_MAX = 500_000   # ~150 MB estimated
+    EVICT_COUNT = 10_000
 
-    def _load_from_db(self, cursor: sqlite3.Cursor):
-        cursor.execute("SELECT id, name, uuid FROM players;")
-        for row_id, name, uuid in cursor.fetchall():
+    def __init__(self, cursor: sqlite3.Cursor):
+        self._cursor = cursor
+        self._conn = cursor.connection
+        self._cache: OrderedDict[tuple[str, str], int] = OrderedDict()
+        self._load_initial_cache()
+
+    def _load_initial_cache(self):
+        count = self._cursor.execute("SELECT COUNT(*) FROM players").fetchone()[0]
+        if count <= self.CACHE_INITIAL_LOAD_MAX:
+            self._cursor.execute("SELECT id, name, uuid FROM players ORDER BY id;")
+        else:
+            self._cursor.execute(
+                "SELECT id, name, uuid FROM players ORDER BY id DESC LIMIT ?;",
+                (self.CACHE_INITIAL_LOAD_MAX,),
+            )
+
+        # reversed() so that oldest entries end up at the front of the
+        # OrderedDict and get evicted first by popitem(last=False).
+        for row_id, name, uuid in reversed(self._cursor.fetchall()):
             self._cache[(name, uuid)] = row_id
-            if row_id >= self._next_id:
-                self._next_id = row_id + 1
-        logging.info(f"PlayerDeduplicator: loaded {len(self._cache)} cached players.")
+
+        if count <= self.CACHE_INITIAL_LOAD_MAX:
+            logging.info(f"PlayerDeduplicator: loaded all {len(self._cache)} players into cache.")
+        else:
+            logging.info(
+                f"PlayerDeduplicator: {count} players in DB, "
+                f"loaded {len(self._cache)} most recent into cache."
+            )
 
     def get_or_create(self, name: str, uuid: str) -> int:
         key = (name, uuid)
+
         cached_id = self._cache.get(key)
         if cached_id is not None:
+            self._cache.move_to_end(key)
             return cached_id
 
-        new_id = self._next_id
-        self._next_id += 1
-        self._cache[key] = new_id
+        try:
+            row = self._cursor.execute(
+                "SELECT id FROM players WHERE name = ? AND uuid = ?", (name, uuid)
+            ).fetchone()
+            if row:
+                self._cache[key] = row[0]
+                self._evict_if_needed()
+                return row[0]
 
-        self._check_cache_size()
-
-        self._writer.queue(
-            "INSERT OR IGNORE INTO players (id, name, uuid) VALUES (?, ?, ?)",
-            (new_id, name, uuid),
-        )
-        
-        return new_id
-
-    def _check_cache_size(self):
-        if self._warned:
-            return
-        estimated = len(self._cache) * _PLAYER_ENTRY_BYTES
-        if estimated >= _CACHE_WARN_BYTES:
-            self._warned = True
-            ErrorHandler.add_error(
-                ErrorKey.CACHE_OVERFLOW_PLAYER,
-                {"cache": "PlayerDeduplicator", "entries": len(self._cache), "estimated_mb": estimated // (1024 * 1024)},
+            self._cursor.execute(
+                "INSERT INTO players (name, uuid) VALUES (?, ?)",
+                (name, uuid),
             )
+            self._conn.commit()
+            new_id = self._cursor.lastrowid
+            if not new_id:
+                ErrorHandler.add_error(ErrorKey.DEDUPER_LASTROWID_NULL, {"cache": "PlayerDeduplicator"})
+                return -1
+            self._cache[key] = new_id
+            self._evict_if_needed()
+            return new_id
+        except Exception as e:
+            ErrorHandler.add_error(ErrorKey.DEDUPER_GET_EXCEPTION, {"cache": "PlayerDeduplicator", "exception": str(e)})
+            return -1
+
+    def _evict_if_needed(self):
+        if len(self._cache) > self.CACHE_MAX:
+            for _ in range(self.EVICT_COUNT):
+                self._cache.popitem(last=False)
 
 
 class DbWriter(Thread):
@@ -147,6 +189,7 @@ class DbWriter(Thread):
         cursor = conn.cursor()
         cursor.execute("PRAGMA journal_mode=WAL;")
         cursor.execute("PRAGMA synchronous=NORMAL;")
+        cursor.execute("PRAGMA busy_timeout=5000;")
 
         while not self._should_stop():
             sleep(0.5)
