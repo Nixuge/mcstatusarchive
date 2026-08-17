@@ -133,7 +133,7 @@ def print_status_block(j_counts: dict, j_total: int,
         last_line_count[0] = cur_count
 
 
-async def run_batch_limit(servers: list, task_limit: int = 100):
+async def run_batch_limit(servers: list, primary_limit: int = 100, max_limit: int = 500, stall_timeout: float = 2.0):
     total = len(servers)
     if total == 0:
         return
@@ -155,19 +155,34 @@ async def run_batch_limit(servers: list, task_limit: int = 100):
     # Initial render
     print_status_block(j_counts, java_total, b_counts, bedrock_total, j_prop_counts, b_prop_counts, dedup_counts, last_line_count=last_line_count, is_first=True)
 
-    sem = asyncio.Semaphore(task_limit)
+    primary_sem = asyncio.Semaphore(primary_limit)
+    max_sem = asyncio.Semaphore(max_limit)
+    loop = asyncio.get_running_loop()
 
     async def poll_worker(server):
         is_java = (server.db.server_type == SERVER_TYPE_JAVA)
         target_counts = j_counts if is_java else b_counts
         target_prop_counts = j_prop_counts if is_java else b_prop_counts
-        async with sem:
+
+        async with max_sem:
+            await primary_sem.acquire()
+            primary_released = False
+
+            def release_primary():
+                nonlocal primary_released
+                if not primary_released:
+                    primary_released = True
+                    primary_sem.release()
+
+            timer_handle = loop.call_later(stall_timeout, release_primary)
             target_counts["processing"] += 1
             print_status_block(j_counts, java_total, b_counts, bedrock_total, j_prop_counts, b_prop_counts, dedup_counts, last_line_count=last_line_count, is_first=False)
             try:
                 res = await server.poll_and_save()
             finally:
                 target_counts["processing"] -= 1
+                timer_handle.cancel()
+                release_primary()
 
             target_counts["done"] += 1
             for prop in res.updated_properties:
