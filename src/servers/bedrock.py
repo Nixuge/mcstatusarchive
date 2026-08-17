@@ -4,7 +4,7 @@ from time import time
 from mcstatus import BedrockServer
 from mcstatus.responses import BedrockStatusResponse
 
-from servers.base import ServerSv, PollResult
+from servers.base import ServerSv, PollResult, PollStatus
 from db.database import Database
 from config import Timings
 from utils.errors import ErrorHandler, ErrorKey
@@ -20,12 +20,12 @@ class BedrockServerSv(ServerSv):
 
     async def save_status(self) -> PollResult:
         if not self.server:
-            return PollResult.OTHER_FAIL
+            return PollResult(status=PollStatus.OTHER_FAIL)
 
         status = await self._perform_status()
         if status is None:
             self.rater.report_down()
-            return PollResult.FAIL
+            return PollResult(status=PollStatus.FAIL)
 
         try:
             data = self.get_values_dict(status)
@@ -34,11 +34,16 @@ class BedrockServerSv(ServerSv):
             self.rater.report_success(status.players.online)
 
             timestamp = int(time())
-            self.save_changes(timestamp, changed)
-            return PollResult.SUCCESS
+            text_dedups = self.save_changes(timestamp, changed)
+            return PollResult(
+                status=PollStatus.SUCCESS,
+                text_dedups=text_dedups,
+                player_dedups=[],
+                updated_properties=list(changed.keys()),
+            )
         except Exception as e:
             ErrorHandler.add_error(ErrorKey.SAVE_EXCEPTION, {"type": "bedrock", "ip": self.ip, "exception": str(e)})
-            return PollResult.OTHER_FAIL
+            return PollResult(status=PollStatus.SAVE_FAIL)
 
     async def _perform_status(self) -> BedrockStatusResponse | None:
         try:

@@ -1,12 +1,27 @@
 import hashlib
 import logging
 import sqlite3
+from enum import Enum, auto
+from dataclasses import dataclass
 from collections import OrderedDict
 from threading import Thread
 import threading
 from time import sleep
 
 from utils.errors import ErrorHandler, ErrorKey
+
+
+class DedupGetType(Enum):
+    CACHE = auto()
+    DB = auto()
+    ADD = auto()
+    ERROR = auto()
+
+
+@dataclass
+class DeduplicatorResult:
+    id: int
+    type: DedupGetType
 
 
 class TextDeduplicator:
@@ -44,7 +59,7 @@ class TextDeduplicator:
                 f"loaded {len(self._cache)} most recent into cache."
             )
 
-    def get_or_create(self, content) -> int:
+    def get_or_create(self, content) -> DeduplicatorResult:
         if isinstance(content, str):
             content_bytes = content.encode("utf-8")
         elif isinstance(content, bytes):
@@ -58,7 +73,7 @@ class TextDeduplicator:
         cached_id = self._cache.get(hash_hex)
         if cached_id is not None:
             self._cache.move_to_end(hash_hex)
-            return cached_id
+            return DeduplicatorResult(id=cached_id, type=DedupGetType.CACHE)
 
         try:
             hash_bytes = bytes.fromhex(hash_hex)
@@ -68,8 +83,7 @@ class TextDeduplicator:
             if row:
                 self._cache[hash_hex] = row[0]
                 self._evict_if_needed()
-                return row[0]
-
+                return DeduplicatorResult(id=row[0], type=DedupGetType.DB)
 
             db_content = content if isinstance(content, (str, bytes)) else str(content)
             self._cursor.execute(
@@ -80,14 +94,14 @@ class TextDeduplicator:
             new_id = self._cursor.lastrowid
             if not new_id:
                 ErrorHandler.add_error(ErrorKey.DEDUPER_LASTROWID_NULL, {"cache": "TextDeduplicator"})
-                return -1
+                return DeduplicatorResult(id=-1, type=DedupGetType.ERROR)
             
             self._cache[hash_hex] = new_id
             self._evict_if_needed()
-            return new_id
+            return DeduplicatorResult(id=new_id, type=DedupGetType.ADD)
         except Exception as e:
             ErrorHandler.add_error(ErrorKey.DEDUPER_GET_EXCEPTION, {"cache": "TextDeduplicator", "exception": str(e)})
-            return -1
+            return DeduplicatorResult(id=-1, type=DedupGetType.ERROR)
     
     def _evict_if_needed(self):
         if len(self._cache) > self.CACHE_MAX:
@@ -129,13 +143,13 @@ class PlayerDeduplicator:
                 f"loaded {len(self._cache)} most recent into cache."
             )
 
-    def get_or_create(self, name: str, uuid: str) -> int:
+    def get_or_create(self, name: str, uuid: str) -> DeduplicatorResult:
         key = (name, uuid)
 
         cached_id = self._cache.get(key)
         if cached_id is not None:
             self._cache.move_to_end(key)
-            return cached_id
+            return DeduplicatorResult(id=cached_id, type=DedupGetType.CACHE)
 
         try:
             row = self._cursor.execute(
@@ -144,7 +158,7 @@ class PlayerDeduplicator:
             if row:
                 self._cache[key] = row[0]
                 self._evict_if_needed()
-                return row[0]
+                return DeduplicatorResult(id=row[0], type=DedupGetType.DB)
 
             self._cursor.execute(
                 "INSERT INTO players (name, uuid) VALUES (?, ?)",
@@ -154,13 +168,13 @@ class PlayerDeduplicator:
             new_id = self._cursor.lastrowid
             if not new_id:
                 ErrorHandler.add_error(ErrorKey.DEDUPER_LASTROWID_NULL, {"cache": "PlayerDeduplicator"})
-                return -1
+                return DeduplicatorResult(id=-1, type=DedupGetType.ERROR)
             self._cache[key] = new_id
             self._evict_if_needed()
-            return new_id
+            return DeduplicatorResult(id=new_id, type=DedupGetType.ADD)
         except Exception as e:
             ErrorHandler.add_error(ErrorKey.DEDUPER_GET_EXCEPTION, {"cache": "PlayerDeduplicator", "exception": str(e)})
-            return -1
+            return DeduplicatorResult(id=-1, type=DedupGetType.ERROR)
 
     def _evict_if_needed(self):
         if len(self._cache) > self.CACHE_MAX:

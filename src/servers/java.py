@@ -9,8 +9,9 @@ from mcstatus import JavaServer
 from mcstatus.responses.forge import ForgeData
 from mcstatus.responses import JavaStatusResponse, JavaStatusPlayer
 
-from servers.base import ServerSv, PollResult
+from servers.base import ServerSv, PollResult, PollStatus
 from db.database import Database
+from db.writer import DedupGetType
 from utils.errors import ErrorHandler, ErrorKey
 from config import Timings, LoggingConfig, McConfig
 
@@ -44,25 +45,30 @@ class JavaServerSv(ServerSv):
 
     async def save_status(self) -> PollResult:
         if not self.server:
-            return PollResult.OTHER_FAIL
+            return PollResult(status=PollStatus.OTHER_FAIL)
 
         status = await self._perform_status()
         if status is None:
             self.rater.report_down()
-            return PollResult.FAIL
+            return PollResult(status=PollStatus.FAIL)
 
         try:
-            data = self.get_values_dict(status)
+            data, player_dedups = self.get_values_dict(status)
             changed = self.update_values(data)
 
             self.rater.report_success(status.players.online)
 
             timestamp = int(time())
-            self.save_changes(timestamp, changed)
-            return PollResult.SUCCESS
+            text_dedups = self.save_changes(timestamp, changed)
+            return PollResult(
+                status=PollStatus.SUCCESS,
+                text_dedups=text_dedups,
+                player_dedups=player_dedups,
+                updated_properties=list(changed.keys()),
+            )
         except Exception as e:
             ErrorHandler.add_error(ErrorKey.SAVE_EXCEPTION, {"type": "java", "ip": self.ip, "exception": str(e)})
-            return PollResult.OTHER_FAIL
+            return PollResult(status=PollStatus.SAVE_FAIL)
 
     async def _perform_status(self) -> JavaStatusResponse | None:
         try:
@@ -81,12 +87,13 @@ class JavaServerSv(ServerSv):
 
         return status
 
-    def get_values_dict(self, status: JavaStatusResponse) -> dict[str, Any]:
-        return {
+    def get_values_dict(self, status: JavaStatusResponse) -> tuple[dict[str, Any], list[DedupGetType]]:
+        sample_str, player_dedups = self._get_player_sample(status.players.sample)
+        values = {
             "players_on": status.players.online,
             "players_max": status.players.max,
             "ping": int(status.latency),
-            "players_sample": self._get_player_sample(status.players.sample),
+            "players_sample": sample_str,
             "version_protocol": status.version.protocol,
             "version_name": status.version.name,
             "motd": self._parse_motd(status),
@@ -94,6 +101,7 @@ class JavaServerSv(ServerSv):
             "enforces_secure_chat": self._optbool_to_int(status.enforces_secure_chat),
             **self._get_forge_data(status.forge_data),
         }
+        return values, player_dedups
 
     @staticmethod
     def _get_favicon(favicon: str | None) -> bytes:
@@ -115,22 +123,24 @@ class JavaServerSv(ServerSv):
                 
         # return b"" # The db format doesnt handle nulls, this is fine tbh.
 
-    def _get_player_sample(self, sample: list[JavaStatusPlayer] | None) -> str:
+    def _get_player_sample(self, sample: list[JavaStatusPlayer] | None) -> tuple[str, list[DedupGetType]]:
         if sample is None:
-            return "-1" # db doesn't handle nulls, so using a unique value for this case.
+            return "-1", [] # db doesn't handle nulls, so using a unique value for this case.
         if len(sample) == 0:
-            return ""
+            return "", []
 
         player_ids: list[int] = []
+        player_dedups: list[DedupGetType] = []
         for player in sample:
             # logging.info(f"Starting player dedup thing ({time_ns()})")
-            p_id = self.db.player_dedup.get_or_create(player.name, player.id)
+            dedup_res = self.db.player_dedup.get_or_create(player.name, player.id)
             # logging.info(f"Done player dedup thing ({time_ns()})")
-            player_ids.append(p_id)
+            player_dedups.append(dedup_res.type)
+            player_ids.append(dedup_res.id)
 
         # Player order can vary so just in case sort so that it's always the same order
         player_ids.sort()
-        return ",".join(str(p_id) for p_id in player_ids)
+        return ",".join(str(p_id) for p_id in player_ids), player_dedups
 
     @staticmethod
     def _optbool_to_int(val: bool | None) -> int:

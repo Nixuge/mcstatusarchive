@@ -6,19 +6,32 @@ from typing import Any
 
 from mcstatus.responses import BedrockStatusResponse, JavaStatusResponse
 
+from dataclasses import dataclass
 from db.database import Database
 from db.schema import METRIC_FIELDS, TEXT_FIELDS
+from db.writer import DedupGetType, DeduplicatorResult
 from config import RaterConfig
 from utils.errors import ErrorHandler, ErrorKey
 from utils.rater import ServerRater
 
 from enum import Enum, auto
+from dataclasses import dataclass, field
 
-class PollResult(Enum):
+class PollStatus(Enum):
     SUCCESS = auto()
     FAIL = auto()
     SKIP = auto()
+    SAVE_FAIL = auto()
     OTHER_FAIL = auto()
+
+
+@dataclass
+class PollResult:
+    status: PollStatus
+    text_dedups: list[DedupGetType] = field(default_factory=list)
+    player_dedups: list[DedupGetType] = field(default_factory=list)
+    updated_properties: list[str] = field(default_factory=list)
+
 
 class ServerSv(ABC):
     server_id: int
@@ -48,8 +61,9 @@ class ServerSv(ABC):
                 changed_values[key] = val
         return changed_values
 
-    def save_changes(self, timestamp: int, changed_values: dict[str, Any]):
+    def save_changes(self, timestamp: int, changed_values: dict[str, Any]) -> list[DedupGetType]:
         batch = []
+        text_dedups: list[DedupGetType] = []
         metric_fields = METRIC_FIELDS.get(self.db.server_type, {})
         text_fields = TEXT_FIELDS.get(self.db.server_type, {})
 
@@ -69,25 +83,29 @@ class ServerSv(ABC):
                 ))
             elif key in text_fields:
                 field_id = text_fields[key]
-                # logging.info(f"Starting text dedup thing ({time.time_ns()})")
-                value_id = self.db.text_dedup.get_or_create(val)
-                # logging.info(f"Done text dedup thing ({time.time_ns()})")
+                dedup_res = self.db.text_dedup.get_or_create(val)
+                if dedup_res.type == DedupGetType.ERROR:
+                    continue
+                text_dedups.append(dedup_res.type)
                 batch.append((
                     "INSERT INTO text_changes VALUES (?, ?, ?, ?)",
-                    (self.server_id, field_id, timestamp, value_id),
+                    (self.server_id, field_id, timestamp, dedup_res.id),
                 ))
             else:
                 ErrorHandler.add_error(ErrorKey.SAVE_STATUS)
 
         if batch:
             self.db.writer.queue_batch(batch)
+
+        return text_dedups
+
     
     def load_previous_values(self):
         self.values = self.db.load_previous_values(self.server_id)
 
     async def poll_and_save(self) -> PollResult:
         if not self.rater.should_poll():
-            return PollResult.SKIP
+            return PollResult(status=PollStatus.SKIP)
         return await self.save_status()
 
     @staticmethod
