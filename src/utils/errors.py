@@ -57,8 +57,8 @@ class ErrorKey(Enum):
 
 
 ERROR_ACTIONS: dict[ErrorKey, list[ErrorAction]] = {
-    ErrorKey.DB_EXECUTE:         [ErrorAction.LOG_CRITICAL, ErrorAction.TRACEBACK, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_ALL, ErrorAction.EXIT_THREAD],
-    ErrorKey.DB_COMMIT:          [ErrorAction.LOG_CRITICAL, ErrorAction.TRACEBACK, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_ALL, ErrorAction.EXIT_THREAD],
+    ErrorKey.DB_EXECUTE:         [ErrorAction.LOG_CRITICAL, ErrorAction.TRACEBACK, ErrorAction.WEBHOOK_CRITICAL],
+    ErrorKey.DB_COMMIT:          [ErrorAction.LOG_CRITICAL, ErrorAction.TRACEBACK, ErrorAction.WEBHOOK_CRITICAL],
     ErrorKey.FRONTEND:           [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR, ErrorAction.EXIT_THREAD],
     ErrorKey.MOTD_PARSE_TYPE:    [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
     ErrorKey.MOTD_JSON_DUMPS:    [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],

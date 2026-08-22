@@ -105,7 +105,7 @@ class ServersLoader:
             async with sem:
                 ok = await server.async_init()
             done += 1
-            print(f"Initializing {server_type} servers {done}/{total}...", end="\r")
+            print(f"Initializing {server_type} servers {done}/{total}...", end="\r", flush=True)
             return server, ok
 
         results: list[tuple[T, bool]] = await asyncio.gather(*(init_one(s) for s in servers))
@@ -143,9 +143,9 @@ class ServersLoader:
         logging.info("Starting to load previous database values for all servers.")
         all_servers = self.bedrock_servers + self.java_servers
         for i, server in enumerate(all_servers):
-            print(f"Loading values for server {i+1}/{len(all_servers)}...", end="\r")
+            print(f"Loading values for server {i+1}/{len(all_servers)}...", end="\r", flush=True)
             server.load_previous_values()
-        print()
+        print(flush=True)
         
         logging.info("Done loading previous database values for all servers.")
 
