@@ -11,11 +11,14 @@ from db.schema import (
     METRIC_FIELDS,
     TEXT_FIELDS,
 )
-from db.writer import DbWriter, TextDeduplicator, PlayerDeduplicator
+from db.deduplicators import TextDeduplicator, PlayerDeduplicator
+from utils.errors import ErrorHandler, ErrorKey
+
+BatchEntry = tuple[str | None, str, tuple | list | None]
 
 
 class Database:
-    def __init__(self, db_path: str, server_type: str, should_stop_func):
+    def __init__(self, db_path: str, server_type: str):
         self.db_path = db_path
         self.server_type = server_type
 
@@ -30,8 +33,6 @@ class Database:
 
         self._ensure_meta()
         logging.info(f"Database ready: {db_path} (format v{DB_FORMAT_VERSION}, {server_type})")
-
-        self.writer = DbWriter(db_path, should_stop_func)
 
         self.text_dedup = TextDeduplicator(self.cursor)
         self.player_dedup = PlayerDeduplicator(self.cursor)
@@ -88,8 +89,34 @@ class Database:
 
         self.conn.commit()
 
-    def start_writer(self):
-        self.writer.start()
+    def execute_batch(self, batch: list[BatchEntry]) -> set[str]:
+        failed_keys: set[str] = set()
+        
+        for value_key, query, params in batch:
+            try:
+                if params is not None:
+                    self.cursor.execute(query, params)
+                else:
+                    self.cursor.execute(query)
+            except Exception as e:
+                ErrorHandler.add_error(
+                    ErrorKey.DB_EXECUTE,
+                    {"err": str(e), "db_path": self.db_path, "query": query, "params": params},
+                )
+                if value_key is not None:
+                    failed_keys.add(value_key)
+
+        try:
+            self.conn.commit()
+        except Exception as e:
+            ErrorHandler.add_error(ErrorKey.DB_COMMIT, {"err": str(e), "db_path": self.db_path})
+            try:
+                self.conn.rollback()
+            except Exception:
+                pass
+            raise
+
+        return failed_keys
 
     def register_server(self, name: str | None, ip: str, port: int) -> int:
         row = self.cursor.execute(

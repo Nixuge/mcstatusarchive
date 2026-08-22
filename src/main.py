@@ -18,7 +18,7 @@ import shutil
 
 from db.database import Database
 from db.schema import SERVER_TYPE_JAVA, SERVER_TYPE_BEDROCK
-from db.writer import DedupGetType
+from db.deduplicators import DedupGetType
 from config import Paths, Timings
 from utils.errors import ErrorHandler
 from servers.base import PollResult, PollStatus
@@ -261,11 +261,8 @@ async def save_every_x_secs(servers: list):
 async def main():
     logging.info("Starting.")
 
-    should_stop = lambda: ErrorHandler.should_stop
-    db_java = Database(Paths.DB_PATH_JAVA, SERVER_TYPE_JAVA, should_stop)
-    db_bedrock = Database(Paths.DB_PATH_BEDROCK, SERVER_TYPE_BEDROCK, should_stop)
-    db_java.start_writer()
-    db_bedrock.start_writer()
+    db_java = Database(Paths.DB_PATH_JAVA, SERVER_TYPE_JAVA)
+    db_bedrock = Database(Paths.DB_PATH_BEDROCK, SERVER_TYPE_BEDROCK)
 
     servers = await ServersLoader(Paths.SERVERS_JSON, db_java, db_bedrock).parse()
     logging.info(f"{len(servers)} servers loaded.")

@@ -4,9 +4,6 @@ import sqlite3
 from enum import Enum, auto
 from dataclasses import dataclass
 from collections import OrderedDict
-from threading import Thread
-import threading
-from time import sleep
 
 from utils.errors import ErrorHandler, ErrorKey
 
@@ -180,61 +177,3 @@ class PlayerDeduplicator:
         if len(self._cache) > self.CACHE_MAX:
             for _ in range(self.EVICT_COUNT):
                 self._cache.popitem(last=False)
-
-
-class DbWriter(Thread):
-    def __init__(self, db_path: str, should_stop_func):
-        super().__init__(name="DbWriter", daemon=True)
-        self.db_path = db_path
-        self._should_stop = should_stop_func
-        self._queue: list[tuple[str, tuple | list | None]] = []
-        self._lock = threading.Lock() # unsure if really required but better safe than sorry
-
-    def queue(self, query: str, params: tuple | list | None = None):
-        with self._lock:
-            self._queue.append((query, params))
-
-    def queue_batch(self, items: list[tuple[str, tuple | list | None]]):
-        with self._lock:
-            self._queue.extend(items)
-
-    def run(self):
-        conn = sqlite3.connect(self.db_path, check_same_thread=False)
-        cursor = conn.cursor()
-        cursor.execute("PRAGMA journal_mode=WAL;")
-        cursor.execute("PRAGMA synchronous=NORMAL;")
-        cursor.execute("PRAGMA busy_timeout=5000;")
-
-        while not self._should_stop():
-            sleep(0.5)
-            if len(self._queue) > 0:
-                self._process_queue(conn, cursor)
-
-        # Final flush
-        if len(self._queue) > 0:
-            self._process_queue(conn, cursor)
-
-        conn.close()
-        logging.info("DbWriter thread stopped gracefully.")
-
-    def _process_queue(self, conn, cursor):
-        with self._lock:
-            to_process = self._queue
-            self._queue = []
-        
-        for query, params in to_process:
-            try:
-                if params is not None:
-                    cursor.execute(query, params)
-                else:
-                    cursor.execute(query)
-            except Exception as e:
-                ErrorHandler.add_error(ErrorKey.DB_EXECUTE, {"err": str(e), "db_path": self.db_path, "query": query, "params": params})
-                # import traceback
-                # traceback.print_exc()
-        try:
-            conn.commit()
-        except Exception as e:
-            ErrorHandler.add_error(ErrorKey.DB_COMMIT, {"err": str(e), "db_path": self.db_path})
-            # import traceback
-            # traceback.print_exc()

@@ -7,9 +7,9 @@ from typing import Any
 from mcstatus.responses import BedrockStatusResponse, JavaStatusResponse
 
 from dataclasses import dataclass
-from db.database import Database
+from db.database import Database, BatchEntry
 from db.schema import METRIC_FIELDS, TEXT_FIELDS
-from db.writer import DedupGetType, DeduplicatorResult
+from db.deduplicators import DedupGetType, DeduplicatorResult
 from config import RaterConfig
 from utils.errors import ErrorHandler, ErrorKey
 from utils.rater import ServerRater
@@ -64,14 +64,14 @@ class ServerSv(ABC):
         self.values.update(saved_values)
 
     def save_changes(self, timestamp: int, changed_values: dict[str, Any]) -> tuple[list[DedupGetType], dict[str, Any]]:
-        batch = []
+        batch: list[BatchEntry] = []
         saved: dict[str, Any] = {}
         text_dedups: list[DedupGetType] = []
         metric_fields = METRIC_FIELDS.get(self.db.server_type, {})
         text_fields = TEXT_FIELDS.get(self.db.server_type, {})
 
-        # Always insert a heartbeat
-        batch.append(("INSERT OR IGNORE INTO heartbeats (server_id, timestamp) VALUES (?, ?)", (self.server_id, timestamp)))
+        # Always insert a heartbeat (not tied to any tracked value)
+        batch.append((None, "INSERT OR IGNORE INTO heartbeats (server_id, timestamp) VALUES (?, ?)", (self.server_id, timestamp)))
 
         for key, val in changed_values.items():
             if val is None:
@@ -80,7 +80,7 @@ class ServerSv(ABC):
             
             if key in metric_fields:
                 field_id = metric_fields[key]
-                batch.append((
+                batch.append((key,
                     "INSERT INTO metric_changes VALUES (?, ?, ?, ?)",
                     (self.server_id, field_id, timestamp, val),
                 ))
@@ -89,11 +89,11 @@ class ServerSv(ABC):
                 field_id = text_fields[key]
                 dedup_res = self.db.text_dedup.get_or_create(val)
                 if dedup_res.type == DedupGetType.ERROR:
-                    # Dedup failed, row not enqueued: leave it out of `saved`
+                    # Dedup failed, no row to write: leave it out of `saved`
                     # so it gets retried on the next poll.
                     continue
                 text_dedups.append(dedup_res.type)
-                batch.append((
+                batch.append((key,
                     "INSERT INTO text_changes VALUES (?, ?, ?, ?)",
                     (self.server_id, field_id, timestamp, dedup_res.id),
                 ))
@@ -102,13 +102,15 @@ class ServerSv(ABC):
                 ErrorHandler.add_error(ErrorKey.SAVE_STATUS)
 
         try:
-            if batch:
-                self.db.writer.queue_batch(batch)
+            failed_keys = self.db.execute_batch(batch)
         except Exception as e:
-            # Enqueue failed, nothing reached the writer queue: persist nothing
-            # in memory so every changed value is retried on the next poll.
+            # Whole transaction failed: save nothing, retry next time
             ErrorHandler.add_error(ErrorKey.SAVE_EXCEPTION, {"ip": self.ip, "exception": str(e)})
             return text_dedups, {}
+
+        # Statements that individually failed for one query only
+        for key in failed_keys:
+            saved.pop(key, None)
 
         self.commit_values(saved)
         return text_dedups, saved
