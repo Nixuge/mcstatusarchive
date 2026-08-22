@@ -43,8 +43,6 @@ class ErrorKey(Enum):
     SAVE_STATUS = auto()
     DNS_LOOKUP = auto()
     INIT_NOT_DONE = auto()
-    LAST_VALUE_BSON_LOAD = auto()
-    LAST_VALUE_BSON_SAVE = auto()
     SERVERS_INIT = auto()
     INVALID_IP = auto()
     DUPLICATE_IP = auto()
@@ -68,8 +66,6 @@ ERROR_ACTIONS: dict[ErrorKey, list[ErrorAction]] = {
     ErrorKey.SAVE_STATUS:        [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
     ErrorKey.DNS_LOOKUP:         [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
     ErrorKey.INIT_NOT_DONE:      [ErrorAction.LOG_CRITICAL, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_THREAD, ErrorAction.EXIT_ALL],
-    ErrorKey.LAST_VALUE_BSON_LOAD: [ErrorAction.LOG_CRITICAL, ErrorAction.TRACEBACK, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_ALL],
-    ErrorKey.LAST_VALUE_BSON_SAVE: [ErrorAction.LOG_CRITICAL, ErrorAction.TRACEBACK, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_ALL],
     ErrorKey.SERVERS_INIT:       [ErrorAction.LOG_CRITICAL, ErrorAction.TRACEBACK, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_ALL],
     ErrorKey.INVALID_IP:         [ErrorAction.LOG_CRITICAL, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_ALL],
     ErrorKey.DUPLICATE_IP:       [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
@@ -169,12 +165,17 @@ class ErrorHandler:
         url = url_map.get(level, "")
         if not url:
             return
+        
+        try:
+            description = json.dumps(data) if data else "No additional data."
+        except (TypeError, ValueError):
+            description = f"Non-serializable data of type {type(data).__name__}: {data!r}"[:2000]
 
         payload = json.dumps({
             "content": None,
             "embeds": [{
                 "title": f"[{level.upper()}] {error}",
-                "description": json.dumps(data) if data else "No additional data.",
+                "description": description,
                 "color": {"warn": 0xFFA500, "error": 0xFF0000, "critical": 0x8B0000}.get(level, 0xFFFFFF),
                 "fields": [{
                     "name": "Traceback",
@@ -183,17 +184,17 @@ class ErrorHandler:
             }],
         }).encode("utf-8")
 
-        req = urllib.request.Request(
-            url,
-            data=payload,
-            headers={
-                "User-Agent": "mcstatusarchive-messager",
-                "Content-Type": "application/json"
-                },
-            method="POST",
-        )
         try:
+            req = urllib.request.Request(
+                url,
+                data=payload,
+                headers={
+                    "User-Agent": "mcstatusarchive-messager",
+                    "Content-Type": "application/json"
+                    },
+                method="POST",
+            )
             urllib.request.urlopen(req, timeout=5)
         except Exception as e:
-            logging.warning(f"Failed to send webhook ({level}): {e}")
+            logging.warning(f"Failed to send webhook: {e}")
 
