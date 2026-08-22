@@ -11,7 +11,7 @@ from mcstatus.responses import JavaStatusResponse, JavaStatusPlayer
 
 from servers.base import ServerSv, PollResult, PollStatus
 from db.database import Database
-from src.db.deduplicators import DedupGetType
+from db.deduplicators import DedupGetType
 from utils.errors import ErrorHandler, ErrorKey
 from config import Timings, LoggingConfig, McConfig
 
