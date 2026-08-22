@@ -92,25 +92,32 @@ class ServersLoader:
 
         return servers_list
 
-    async def _init_servers(self, server_type: str, servers: list[T]) -> list[T]:
-        chunks = [servers[x:x+200] for x in range(0, len(servers), 200)]
-        logging.info(f"Got {len(servers)} {server_type} servers. Splitting initialization tasks in {len(chunks)} chunk(s).")
+    async def _init_servers(self, server_type: str, servers: list[T], max_concurrent: int = 100) -> list[T]:
+        total = len(servers)
+        if total == 0:
+            return []
+
+        sem = asyncio.Semaphore(max_concurrent)
+        done = 0
+
+        async def init_one(server: T) -> tuple[T, bool]:
+            nonlocal done
+            async with sem:
+                ok = await server.async_init()
+            done += 1
+            print(f"Initializing {server_type} servers {done}/{total}...", end="\r")
+            return server, ok
+
+        results: list[tuple[T, bool]] = await asyncio.gather(*(init_one(s) for s in servers))
+        print()
 
         servers_out: list[T] = []
         failed_servers: list[str] = []
-        for i, chunk in enumerate(chunks):
-            results: list[bool] = await asyncio.gather(*[server.async_init() for server in chunk])
-            for server, ok in zip(chunk, results):
-                if ok:
-                    servers_out.append(server)
-                else:
-                    failed_servers.append(f"{server.ip}:{server.port}")
-
-            if i+1 == len(chunks):
-                logging.info("Done processing all chunks!")
+        for server, ok in results:
+            if ok:
+                servers_out.append(server)
             else:
-                logging.info(f"Done processing chunk {i+1}/{len(chunks)}. Waiting 0.1s.")
-                await asyncio.sleep(0.1)
+                failed_servers.append(f"{server.ip}:{server.port}")
 
         if failed_servers:
             logging.warning(f"{len(failed_servers)} {server_type} servers failed to initialize:")
@@ -135,7 +142,11 @@ class ServersLoader:
 
         logging.info("Starting to load previous database values for all servers.")
         all_servers = self.bedrock_servers + self.java_servers
-        for server in all_servers:
+        for i, server in enumerate(all_servers):
+            print(f"Loading values for server {i+1}/{len(all_servers)}...", end="\r")
             server.load_previous_values()
+        print()
+        
+        logging.info("Done loading previous database values for all servers.")
 
         return all_servers
