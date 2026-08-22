@@ -53,16 +53,19 @@ class ServerSv(ABC):
             burst_threshold=RaterConfig.BURST_THRESHOLD,
         )
 
-    def update_values(self, new_values: dict[str, Any]) -> dict[str, Any]:
-        changed_values = {}
-        for key, val in new_values.items():
-            if self.values.get(key) != val:
-                self.values[key] = val
-                changed_values[key] = val
-        return changed_values
+    def diff_values(self, new_values: dict[str, Any]) -> dict[str, Any]:
+        return {
+            key: val
+            for key, val in new_values.items()
+            if self.values.get(key) != val
+        }
 
-    def save_changes(self, timestamp: int, changed_values: dict[str, Any]) -> list[DedupGetType]:
+    def commit_values(self, saved_values: dict[str, Any]) -> None:
+        self.values.update(saved_values)
+
+    def save_changes(self, timestamp: int, changed_values: dict[str, Any]) -> tuple[list[DedupGetType], dict[str, Any]]:
         batch = []
+        saved: dict[str, Any] = {}
         text_dedups: list[DedupGetType] = []
         metric_fields = METRIC_FIELDS.get(self.db.server_type, {})
         text_fields = TEXT_FIELDS.get(self.db.server_type, {})
@@ -72,7 +75,7 @@ class ServerSv(ABC):
 
         for key, val in changed_values.items():
             if val is None:
-                ErrorHandler.add_error(ErrorKey.SAVE_VALUE_NULL, {"data": changed_values, "key": key})
+                ErrorHandler.add_error(ErrorKey.SAVE_VALUE_NULL, {"key": key})
                 continue
             
             if key in metric_fields:
@@ -81,23 +84,34 @@ class ServerSv(ABC):
                     "INSERT INTO metric_changes VALUES (?, ?, ?, ?)",
                     (self.server_id, field_id, timestamp, val),
                 ))
+                saved[key] = val
             elif key in text_fields:
                 field_id = text_fields[key]
                 dedup_res = self.db.text_dedup.get_or_create(val)
                 if dedup_res.type == DedupGetType.ERROR:
+                    # Dedup failed, row not enqueued: leave it out of `saved`
+                    # so it gets retried on the next poll.
                     continue
                 text_dedups.append(dedup_res.type)
                 batch.append((
                     "INSERT INTO text_changes VALUES (?, ?, ?, ?)",
                     (self.server_id, field_id, timestamp, dedup_res.id),
                 ))
+                saved[key] = val
             else:
                 ErrorHandler.add_error(ErrorKey.SAVE_STATUS)
 
-        if batch:
-            self.db.writer.queue_batch(batch)
+        try:
+            if batch:
+                self.db.writer.queue_batch(batch)
+        except Exception as e:
+            # Enqueue failed, nothing reached the writer queue: persist nothing
+            # in memory so every changed value is retried on the next poll.
+            ErrorHandler.add_error(ErrorKey.SAVE_EXCEPTION, {"ip": self.ip, "exception": str(e)})
+            return text_dedups, {}
 
-        return text_dedups
+        self.commit_values(saved)
+        return text_dedups, saved
 
     
     def load_previous_values(self):

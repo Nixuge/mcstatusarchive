@@ -54,17 +54,17 @@ class JavaServerSv(ServerSv):
 
         try:
             data, player_dedups = self.get_values_dict(status)
-            changed = self.update_values(data)
+            changed = self.diff_values(data)
 
             self.rater.report_success(status.players.online)
 
             timestamp = int(time())
-            text_dedups = self.save_changes(timestamp, changed)
+            text_dedups, saved = self.save_changes(timestamp, changed)
             return PollResult(
                 status=PollStatus.SUCCESS,
                 text_dedups=text_dedups,
                 player_dedups=player_dedups,
-                updated_properties=list(changed.keys()),
+                updated_properties=list(saved.keys()),
             )
         except Exception as e:
             ErrorHandler.add_error(ErrorKey.SAVE_EXCEPTION, {"type": "java", "ip": self.ip, "exception": str(e)})
