@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Type
+from typing import TypeVar
 
 from utils.errors import ErrorHandler, ErrorKey
 try:
@@ -13,6 +13,9 @@ from servers.bedrock import BedrockServerSv
 from servers.java import JavaServerSv
 from db.database import Database
 from db.schema import SERVER_TYPE_JAVA, SERVER_TYPE_BEDROCK
+
+
+T = TypeVar("T", bound=ServerSv)
 
 
 # Technically supports ipv6 tho we dont rly care lmao
@@ -45,11 +48,11 @@ class ServersLoader:
         self.bedrock_servers: list[BedrockServerSv] = []
 
     
-    def _load_servers_for_type(self, server_type: str, clazz: Type[ServerSv], db: Database, dict_keys: list[str], list_keys: list[str]) -> list:
+    def _load_servers_for_type(self, server_type: str, clazz: type[T], db: Database, dict_keys: list[str], list_keys: list[str]) -> list[T]:
         default_port = DEFAULT_PORTS[server_type]
         seen_endpoints: set[tuple[str, int]] = set()
         duplicates: set[str] = set()
-        servers_list: list[ServerSv] = []
+        servers_list: list[T] = []
 
         # Process dict sections
         for key in dict_keys:
@@ -89,33 +92,46 @@ class ServersLoader:
 
         return servers_list
 
-    async def _init_servers(self, server_type: str, servers: list) -> list:
+    async def _init_servers(self, server_type: str, servers: list[T]) -> list[T]:
         chunks = [servers[x:x+200] for x in range(0, len(servers), 200)]
         logging.info(f"Got {len(servers)} {server_type} servers. Splitting initialization tasks in {len(chunks)} chunk(s).")
+
+        servers_out: list[T] = []
+        failed_servers: list[str] = []
         for i, chunk in enumerate(chunks):
-            await asyncio.gather(*[server.async_init() for server in chunk])
+            results: list[bool] = await asyncio.gather(*[server.async_init() for server in chunk])
+            for server, ok in zip(chunk, results):
+                if ok:
+                    servers_out.append(server)
+                else:
+                    failed_servers.append(f"{server.ip}:{server.port}")
+
             if i+1 == len(chunks):
                 logging.info("Done processing all chunks!")
             else:
                 logging.info(f"Done processing chunk {i+1}/{len(chunks)}. Waiting 0.1s.")
                 await asyncio.sleep(0.1)
 
-        return servers
+        if failed_servers:
+            logging.warning(f"{len(failed_servers)} {server_type} servers failed to initialize:")
+            logging.warning(f"{failed_servers}")
 
-    async def parse(self) -> list:
-        self.java_servers = self._load_servers_for_type(
+        return servers_out
+
+    async def parse(self) -> list[ServerSv]:
+        java_servers = self._load_servers_for_type(
             SERVER_TYPE_JAVA, JavaServerSv, self.db_java, dict_keys=["java"], list_keys=["java_list"]
         )
-        self.bedrock_servers = self._load_servers_for_type(
+        bedrock_servers = self._load_servers_for_type(
             SERVER_TYPE_BEDROCK, BedrockServerSv, self.db_bedrock, dict_keys=["bedrock", "bugrock"], list_keys=["bedrock_list"]
         )
         logging.info("Done getting the IPs and table names out of the servers.json file.")
 
-        logging.info(f"Starting to load bedrock servers. (count: {len(self.bedrock_servers)})")
-        await self._init_servers("Bedrock", self.bedrock_servers)
+        logging.info(f"Starting to load bedrock servers. (count: {len(bedrock_servers)})")
+        self.bedrock_servers = await self._init_servers("Bedrock", bedrock_servers)
 
-        logging.info(f"Starting to load dns for java servers. (count: {len(self.java_servers)})")
-        await self._init_servers("Java", self.java_servers)
+        logging.info(f"Starting to load dns for java servers. (count: {len(java_servers)})")
+        self.java_servers = await self._init_servers("Java", java_servers)
 
         logging.info("Starting to load previous database values for all servers.")
         all_servers = self.bedrock_servers + self.java_servers

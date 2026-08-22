@@ -139,7 +139,7 @@ class ServerSv(ABC):
         return ""
     
     @abstractmethod
-    async def async_init(self): pass
+    async def async_init(self) -> bool: pass
 
     @abstractmethod
     async def save_status(self) -> PollResult: pass

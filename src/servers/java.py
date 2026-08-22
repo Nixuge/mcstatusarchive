@@ -21,7 +21,7 @@ class JavaServerSv(ServerSv):
     def __init__(self, server_id: int, ip: str, db: Database, port: int = 25565) -> None:
         super().__init__(server_id, ip, db, port)
 
-    async def async_init(self):
+    async def async_init(self) -> bool:
         tries = 1
         success = False
         while tries <= 3 and not success:
@@ -42,6 +42,8 @@ class JavaServerSv(ServerSv):
 
         if not success:
             ErrorHandler.add_error(ErrorKey.DNS_LOOKUP, {"server": self.ip, "port": self.port})
+
+        return success
 
     async def save_status(self) -> PollResult:
         if not self.server:

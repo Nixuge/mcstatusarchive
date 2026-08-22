@@ -22,9 +22,7 @@ ERRORS = {
 class ErrorAction(Enum):
     LOG_CRITICAL = auto()
     LOG_ERROR = auto()
-    ERROR_FILE = auto()
     TRACEBACK = auto()
-    TRACEBACK_FILE = auto()
     EXIT_ALL = auto()
     EXIT_THREAD = auto()
     WEBHOOK_WARN = auto()
@@ -33,34 +31,60 @@ class ErrorAction(Enum):
 
 
 class ErrorKey(Enum):
-    # DB_IMPORTANT = [ErrorAction.LOG_CRITICAL, ErrorAction.ERROR_FILE, ErrorAction.TRACEBACK, ErrorAction.TRACEBACK_FILE, ErrorAction.EXIT_ALL, ErrorAction.EXIT_THREAD],
-    DB_EXECUTE = [ErrorAction.LOG_CRITICAL, ErrorAction.ERROR_FILE, ErrorAction.TRACEBACK, ErrorAction.TRACEBACK_FILE, ErrorAction.EXIT_ALL, ErrorAction.EXIT_THREAD],
-    DB_COMMIT = [ErrorAction.LOG_CRITICAL, ErrorAction.ERROR_FILE, ErrorAction.TRACEBACK, ErrorAction.TRACEBACK_FILE, ErrorAction.EXIT_ALL, ErrorAction.EXIT_THREAD],
-    FRONTEND = [ErrorAction.LOG_ERROR, ErrorAction.EXIT_THREAD],
-    MOTD_PARSE_TYPE = [ErrorAction.LOG_ERROR, ErrorAction.ERROR_FILE],
-    MOTD_JSON_DUMPS = [ErrorAction.LOG_ERROR, ErrorAction.ERROR_FILE],
-    CONFIG_BAD_JSON = [ErrorAction.LOG_ERROR, ErrorAction.ERROR_FILE, ErrorAction.TRACEBACK_FILE, ErrorAction.EXIT_ALL, ErrorAction.EXIT_THREAD],
-    SAVE_STATUS = [ErrorAction.LOG_ERROR, ErrorAction.ERROR_FILE, ErrorAction.TRACEBACK_FILE],
-    DNS_LOOKUP = [ErrorAction.LOG_CRITICAL, ErrorAction.ERROR_FILE, ErrorAction.EXIT_ALL, ErrorAction.EXIT_THREAD],
-    INIT_NOT_DONE = [ErrorAction.LOG_CRITICAL, ErrorAction.ERROR_FILE, ErrorAction.EXIT_THREAD, ErrorAction.EXIT_ALL],
-    LAST_VALUE_BSON_LOAD = [ErrorAction.LOG_CRITICAL, ErrorAction.ERROR_FILE, ErrorAction.TRACEBACK, ErrorAction.TRACEBACK_FILE, ErrorAction.EXIT_ALL],
-    LAST_VALUE_BSON_SAVE = [ErrorAction.LOG_CRITICAL, ErrorAction.ERROR_FILE, ErrorAction.TRACEBACK, ErrorAction.TRACEBACK_FILE, ErrorAction.EXIT_ALL],
-    SERVERS_INIT = [ErrorAction.LOG_CRITICAL, ErrorAction.ERROR_FILE, ErrorAction.TRACEBACK, ErrorAction.TRACEBACK_FILE, ErrorAction.EXIT_ALL],
-    INVALID_IP = [ErrorAction.LOG_CRITICAL, ErrorAction.ERROR_FILE, ErrorAction.EXIT_ALL],
-    DUPLICATE_IP = [ErrorAction.LOG_ERROR]
-    CACHE_OVERFLOW_TEXT = [ErrorAction.LOG_ERROR, ErrorAction.ERROR_FILE, ErrorAction.WEBHOOK_WARN]
-    CACHE_OVERFLOW_PLAYER = [ErrorAction.LOG_ERROR, ErrorAction.ERROR_FILE, ErrorAction.WEBHOOK_WARN]
-    TEXT_DEDUP_BAD_TYPE = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_WARN]
-    SAVE_VALUE_NULL = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
-    DEDUPER_LASTROWID_NULL = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
-    DEDUPER_GET_EXCEPTION = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
-    FAVICON_DECODE_FAIL = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_WARN],
-    SAVE_EXCEPTION = [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR]
+    # NOTE: members use auto() and their actions live in ERROR_ACTIONS below.
+    # Storing action lists as the enum values made keys with identical lists
+    # alias into a single member (e.g. DNS_LOOKUP becoming MOTD_PARSE_TYPE).
+    DB_EXECUTE = auto()
+    DB_COMMIT = auto()
+    FRONTEND = auto()
+    MOTD_PARSE_TYPE = auto()
+    MOTD_JSON_DUMPS = auto()
+    CONFIG_BAD_JSON = auto()
+    SAVE_STATUS = auto()
+    DNS_LOOKUP = auto()
+    INIT_NOT_DONE = auto()
+    LAST_VALUE_BSON_LOAD = auto()
+    LAST_VALUE_BSON_SAVE = auto()
+    SERVERS_INIT = auto()
+    INVALID_IP = auto()
+    DUPLICATE_IP = auto()
+    CACHE_OVERFLOW_TEXT = auto()
+    CACHE_OVERFLOW_PLAYER = auto()
+    TEXT_DEDUP_BAD_TYPE = auto()
+    SAVE_VALUE_NULL = auto()
+    DEDUPER_LASTROWID_NULL = auto()
+    DEDUPER_GET_EXCEPTION = auto()
+    FAVICON_DECODE_FAIL = auto()
+    SAVE_EXCEPTION = auto()
+
+
+ERROR_ACTIONS: dict[ErrorKey, list[ErrorAction]] = {
+    ErrorKey.DB_EXECUTE:         [ErrorAction.LOG_CRITICAL, ErrorAction.TRACEBACK, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_ALL, ErrorAction.EXIT_THREAD],
+    ErrorKey.DB_COMMIT:          [ErrorAction.LOG_CRITICAL, ErrorAction.TRACEBACK, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_ALL, ErrorAction.EXIT_THREAD],
+    ErrorKey.FRONTEND:           [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR, ErrorAction.EXIT_THREAD],
+    ErrorKey.MOTD_PARSE_TYPE:    [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
+    ErrorKey.MOTD_JSON_DUMPS:    [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
+    ErrorKey.CONFIG_BAD_JSON:    [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR, ErrorAction.EXIT_ALL, ErrorAction.EXIT_THREAD],
+    ErrorKey.SAVE_STATUS:        [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
+    ErrorKey.DNS_LOOKUP:         [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
+    ErrorKey.INIT_NOT_DONE:      [ErrorAction.LOG_CRITICAL, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_THREAD, ErrorAction.EXIT_ALL],
+    ErrorKey.LAST_VALUE_BSON_LOAD: [ErrorAction.LOG_CRITICAL, ErrorAction.TRACEBACK, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_ALL],
+    ErrorKey.LAST_VALUE_BSON_SAVE: [ErrorAction.LOG_CRITICAL, ErrorAction.TRACEBACK, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_ALL],
+    ErrorKey.SERVERS_INIT:       [ErrorAction.LOG_CRITICAL, ErrorAction.TRACEBACK, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_ALL],
+    ErrorKey.INVALID_IP:         [ErrorAction.LOG_CRITICAL, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_ALL],
+    ErrorKey.DUPLICATE_IP:       [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
+    ErrorKey.CACHE_OVERFLOW_TEXT:   [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_WARN],
+    ErrorKey.CACHE_OVERFLOW_PLAYER: [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_WARN],
+    ErrorKey.TEXT_DEDUP_BAD_TYPE:   [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_WARN],
+    ErrorKey.SAVE_VALUE_NULL:       [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
+    ErrorKey.DEDUPER_LASTROWID_NULL: [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
+    ErrorKey.DEDUPER_GET_EXCEPTION:  [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
+    ErrorKey.FAVICON_DECODE_FAIL:    [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_WARN],
+    ErrorKey.SAVE_EXCEPTION:         [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
+}
     
 
 class ErrorHandler:
-    # _error_file_path = "/home/nix/"
-    _error_file_path = "./error/"
     _errors_counts: dict[ErrorKey, int] = {}
     should_stop = False
 
@@ -89,9 +113,7 @@ class ErrorHandler:
         cls._up_error_count(error_key)
 
         error_label = error_key.name
-        error_actions = error_key.value
-        if isinstance(error_actions, tuple):
-            error_actions = error_actions[0]
+        error_actions = ERROR_ACTIONS[error_key]
 
         if ErrorAction.LOG_CRITICAL in error_actions:
             logging.critical("Critical error happened: " + error_label)
@@ -101,12 +123,8 @@ class ErrorHandler:
             logging.error("Non-critical error happened: " + error_label)
             if data:
                 logging.critical(str(data))
-        if ErrorAction.ERROR_FILE in error_actions:
-            cls._data_to_file(error_label, data)
         if ErrorAction.TRACEBACK in error_actions:
             traceback.print_exc()
-        if ErrorAction.TRACEBACK_FILE in error_actions:
-            cls._traceback_to_file(error_label)
         if ErrorAction.WEBHOOK_WARN in error_actions:
             cls._send_webhook(error_label, data, level="warn")
         if ErrorAction.WEBHOOK_ERROR in error_actions:
@@ -125,7 +143,7 @@ class ErrorHandler:
     def _unknown_error(cls, error: str) -> int:
         logging.critical("Unknown error type " + error)
         logging.critical("Exiting")
-        cls._traceback_to_file(f"UNKNOWN_{error}")
+        traceback.print_exc()
         cls.should_stop = True
         return 1
 
@@ -140,18 +158,6 @@ class ErrorHandler:
     def _get_exit_code(cls, error: ErrorKey) -> int:
         index_err = list(ErrorKey).index(error) #TODO: Test
         return index_err + 1 # 1 is reserved for "unknown errors"
-
-    @classmethod
-    def _data_to_file(cls, error: str, data: dict | None):
-        with open(cls._error_file_path + f"ERROR_{error}.txt", "a") as file:
-            file.write("Error happened:" + error)
-            if data:
-                file.write("Additional data: " + json.dumps(data))
-
-    @classmethod
-    def _traceback_to_file(cls, error: str):
-        with open(cls._error_file_path + f"ERROR_{error}.txt", "a") as file:
-            file.write(traceback.format_exc())
 
     @classmethod
     def _send_webhook(cls, error: str, data: dict | None, level: str):

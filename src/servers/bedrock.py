@@ -15,8 +15,9 @@ class BedrockServerSv(ServerSv):
     def __init__(self, server_id: int, ip: str, db: Database, port: int = 19132) -> None:
         super().__init__(server_id, ip, db, port)
 
-    async def async_init(self):
+    async def async_init(self) -> bool:
         self.server = BedrockServer.lookup(self.ip, self.port)
+        return True
 
     async def save_status(self) -> PollResult:
         if not self.server:
