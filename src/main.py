@@ -69,10 +69,30 @@ def print_status_block(j_counts: dict, j_total: int,
                        j_prop_counts: dict[str, int] | None = None,
                        b_prop_counts: dict[str, int] | None = None,
                        dedup_counts: dict | None = None,
+                       start_time: float | None = None,
                        last_line_count: list[int] | None = None,
                        is_first: bool = False):
     width = max(shutil.get_terminal_size((80, 20)).columns - 1, 40)
-    divider = "=" * min(30, width)
+    
+    if start_time is not None:
+        elapsed = time() - start_time
+        if elapsed < 60:
+            time_str = f" {elapsed:.1f}s "
+        else:
+            mins = int(elapsed // 60)
+            secs = elapsed % 60
+            time_str = f" {mins}m {secs:04.1f}s "
+
+        target_len = min(36, width)
+        remaining = max(4, target_len - len(time_str) - 2)
+        left = remaining // 2
+        right = remaining - left
+        top_divider = f"{'=' * left}[\033[96m{time_str}\033[0m]{'=' * right}"
+        bottom_divider = "=" * (left + len(time_str) + 2 + right)
+    else:
+        top_divider = "IS NONE?"
+        # top_divider = "=" * min(30, width)
+        bottom_divider = top_divider
 
     j_str = (
         f"Java: {j_counts['done']}/{j_total} "
@@ -93,7 +113,7 @@ def print_status_block(j_counts: dict, j_total: int,
         f"\033[95m{b_counts['other']}\033[0m)"
     )
     lines = [
-        divider,
+        top_divider,
         j_str,
         *wrap_prop_lines("  Props: ", j_prop_counts or {}, width),
         b_str,
@@ -113,7 +133,7 @@ def print_status_block(j_counts: dict, j_total: int,
         lines.append(f"Dedup Text (Bedrock): \033[92m{bt_c:,} cache\033[0m | \033[93m{bt_d:,} db\033[0m | \033[96m{bt_a:,} new\033[0m")
         lines.append(f"Dedup Players:        \033[92m{p_c:,} cache\033[0m | \033[93m{p_d:,} db\033[0m | \033[96m{p_a:,} new\033[0m")
 
-    lines.append(divider)
+    lines.append(bottom_divider)
     cur_count = len(lines)
     prev_count = last_line_count[0] if (last_line_count is not None and not is_first) else 0
 
@@ -133,11 +153,12 @@ def print_status_block(j_counts: dict, j_total: int,
         last_line_count[0] = cur_count
 
 
-async def run_batch_limit(servers: list, primary_limit: int = 100, max_limit: int = 500, stall_timeout: float = 2.0):
+async def run_batch_limit(servers: list, primary_limit: int = 100, max_limit: int = 500, stall_timeout: float = 1.0):
     total = len(servers)
     if total == 0:
         return
 
+    start_time = time()
     java_total = sum(1 for s in servers if s.db.server_type == SERVER_TYPE_JAVA)
     bedrock_total = total - java_total
 
@@ -153,7 +174,7 @@ async def run_batch_limit(servers: list, primary_limit: int = 100, max_limit: in
     last_line_count = [0]
 
     # Initial render
-    print_status_block(j_counts, java_total, b_counts, bedrock_total, j_prop_counts, b_prop_counts, dedup_counts, last_line_count=last_line_count, is_first=True)
+    print_status_block(j_counts, java_total, b_counts, bedrock_total, j_prop_counts, b_prop_counts, dedup_counts, start_time=start_time, last_line_count=last_line_count, is_first=True)
 
     primary_sem = asyncio.Semaphore(primary_limit)
     max_sem = asyncio.Semaphore(max_limit)
@@ -176,7 +197,7 @@ async def run_batch_limit(servers: list, primary_limit: int = 100, max_limit: in
 
             timer_handle = loop.call_later(stall_timeout, release_primary)
             target_counts["processing"] += 1
-            print_status_block(j_counts, java_total, b_counts, bedrock_total, j_prop_counts, b_prop_counts, dedup_counts, last_line_count=last_line_count, is_first=False)
+            print_status_block(j_counts, java_total, b_counts, bedrock_total, j_prop_counts, b_prop_counts, dedup_counts, start_time=start_time, last_line_count=last_line_count, is_first=False)
             try:
                 res = await server.poll_and_save()
             finally:
@@ -219,7 +240,7 @@ async def run_batch_limit(servers: list, primary_limit: int = 100, max_limit: in
                 elif p == DedupGetType.ADD:
                     dedup_counts["player_add"] += 1
 
-            print_status_block(j_counts, java_total, b_counts, bedrock_total, j_prop_counts, b_prop_counts, dedup_counts, last_line_count=last_line_count, is_first=False)
+            print_status_block(j_counts, java_total, b_counts, bedrock_total, j_prop_counts, b_prop_counts, dedup_counts, start_time=start_time, last_line_count=last_line_count, is_first=False)
 
     await asyncio.gather(*(poll_worker(s) for s in servers))
 
