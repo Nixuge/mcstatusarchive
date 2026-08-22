@@ -22,7 +22,7 @@ class DeduplicatorResult:
 
 
 class TextDeduplicator:
-    CACHE_INITIAL_LOAD_MAX = 50_000
+    CACHE_INITIAL_LOAD_MAX = 10_000
     CACHE_MAX = 500_000
     EVICT_COUNT = 10_000
 
@@ -107,7 +107,7 @@ class TextDeduplicator:
 
 
 class PlayerDeduplicator:
-    CACHE_INITIAL_LOAD_MAX = 50_000
+    CACHE_INITIAL_LOAD_MAX = 10_000
     CACHE_MAX = 500_000   # ~150 MB estimated
     EVICT_COUNT = 10_000
 

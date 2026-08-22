@@ -72,6 +72,6 @@ class BedrockServerSv(ServerSv):
             "version_name": status.version.name,
             "version_brand": status.version.brand,
             "motd": self._parse_motd(status),
-            "gamemode": status.gamemode,
-            "map": status.map_name
+            "gamemode": status.gamemode if status.gamemode != None else "",
+            "map": status.map_name if status.map_name != None else ""
         }
