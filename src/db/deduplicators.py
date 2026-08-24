@@ -1,11 +1,31 @@
 import hashlib
 import logging
+import lzma
 import sqlite3
 from enum import Enum, auto
 from dataclasses import dataclass
 from collections import OrderedDict
 
 from utils.errors import ErrorHandler, ErrorKey
+
+LZMA_MIN_INPUT = 64
+
+_LZMA_FILTERS = [{"id": lzma.FILTER_LZMA2, "preset": lzma.PRESET_DEFAULT}]
+
+def try_compress(data: bytes) -> tuple[bytes, bool]:
+    # if len(data) < LZMA_MIN_INPUT:
+        # return data, False
+    compressed = lzma.compress(data, format=lzma.FORMAT_RAW, filters=_LZMA_FILTERS)
+    if len(compressed) < len(data):
+        return compressed, True
+
+    return data, False
+
+
+def decompress_if_needed(blob: bytes, compressed: bool) -> bytes:
+    if not compressed:
+        return blob
+    return lzma.decompress(blob, format=lzma.FORMAT_RAW, filters=_LZMA_FILTERS)
 
 
 class DedupGetType(Enum):
@@ -82,10 +102,10 @@ class TextDeduplicator:
                 self._evict_if_needed()
                 return DeduplicatorResult(id=row[0], type=DedupGetType.DB)
 
-            db_content = content if isinstance(content, (str, bytes)) else str(content)
+            store_blob, compressed = try_compress(content_bytes)
             self._cursor.execute(
-                "INSERT INTO text_values (hash, content) VALUES (?, ?)",
-                (hash_bytes, db_content),
+                "INSERT INTO text_values (hash, content, compressed) VALUES (?, ?, ?)",
+                (hash_bytes, store_blob, int(compressed)),
             )
             self._conn.commit()
             new_id = self._cursor.lastrowid

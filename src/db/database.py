@@ -11,7 +11,7 @@ from db.schema import (
     METRIC_FIELDS,
     TEXT_FIELDS,
 )
-from db.deduplicators import TextDeduplicator, PlayerDeduplicator
+from db.deduplicators import TextDeduplicator, PlayerDeduplicator, decompress_if_needed
 from utils.errors import ErrorHandler, ErrorKey
 
 BatchEntry = tuple[str | None, str, tuple | list | None]
@@ -24,6 +24,7 @@ class Database:
 
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
         self.cursor = self.conn.cursor()
+        self.cursor.execute("PRAGMA page_size=8192;")
         self.cursor.execute("PRAGMA journal_mode=WAL;")
         self.cursor.execute("PRAGMA synchronous=NORMAL;")
         self.cursor.execute("PRAGMA busy_timeout=5000;")
@@ -168,7 +169,7 @@ class Database:
         # to its actual value from the text_values table.
         text_names = TEXT_FIELD_NAMES.get(self.server_type, {})
         rows = self.cursor.execute(
-            "SELECT tc.field_id, tv.content "
+            "SELECT tc.field_id, tv.content, tv.compressed "
             "FROM text_changes tc "
             "JOIN text_values tv ON tv.id = tc.value_id "
             "INNER JOIN ("
@@ -180,10 +181,11 @@ class Database:
             "WHERE tc.server_id = ?;",
             (server_id, server_id),
         ).fetchall()
-        for field_id, content in rows:
+        for field_id, content, compressed in rows:
             col = text_names.get(field_id)
             if col:
                 if isinstance(content, bytes):
+                    content = decompress_if_needed(content, bool(compressed))
                     try:
                         # If is an encoded string (eg motd)
                         content = content.decode("utf-8")
