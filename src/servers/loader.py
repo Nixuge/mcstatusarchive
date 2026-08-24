@@ -121,7 +121,7 @@ class ServersLoader:
 
         if failed_servers:
             logging.warning(f"{len(failed_servers)} {server_type} servers failed to initialize:")
-            logging.warning(f"{failed_servers}")
+            ErrorHandler.add_error(ErrorKey.DNS_LOOKUP_BATCH, {"servers": failed_servers})
 
         return servers_out
 

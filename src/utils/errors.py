@@ -42,6 +42,7 @@ class ErrorKey(Enum):
     CONFIG_BAD_JSON = auto()
     SAVE_STATUS = auto()
     DNS_LOOKUP = auto()
+    DNS_LOOKUP_BATCH = auto()
     INIT_NOT_DONE = auto()
     SERVERS_INIT = auto()
     INVALID_IP = auto()
@@ -64,7 +65,8 @@ ERROR_ACTIONS: dict[ErrorKey, list[ErrorAction]] = {
     ErrorKey.MOTD_JSON_DUMPS:    [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
     ErrorKey.CONFIG_BAD_JSON:    [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR, ErrorAction.EXIT_ALL, ErrorAction.EXIT_THREAD],
     ErrorKey.SAVE_STATUS:        [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
-    ErrorKey.DNS_LOOKUP:         [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
+    ErrorKey.DNS_LOOKUP:         [ErrorAction.LOG_ERROR],
+    ErrorKey.DNS_LOOKUP_BATCH:    [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
     ErrorKey.INIT_NOT_DONE:      [ErrorAction.LOG_CRITICAL, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_THREAD, ErrorAction.EXIT_ALL],
     ErrorKey.SERVERS_INIT:       [ErrorAction.LOG_CRITICAL, ErrorAction.TRACEBACK, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_ALL],
     ErrorKey.INVALID_IP:         [ErrorAction.LOG_CRITICAL, ErrorAction.WEBHOOK_CRITICAL, ErrorAction.EXIT_ALL],
