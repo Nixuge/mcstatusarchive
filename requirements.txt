@@ -1,4 +1,4 @@
 httpx
-bson
 mcstatus
 pyjson5
+zstandard

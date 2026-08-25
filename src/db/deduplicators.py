@@ -1,6 +1,6 @@
 import hashlib
 import logging
-import lzma
+import zstandard as zstd
 import sqlite3
 from enum import Enum, auto
 from dataclasses import dataclass
@@ -8,14 +8,11 @@ from collections import OrderedDict
 
 from utils.errors import ErrorHandler, ErrorKey
 
-LZMA_MIN_INPUT = 64
-
-_LZMA_FILTERS = [{"id": lzma.FILTER_LZMA2, "preset": lzma.PRESET_DEFAULT}]
+_ZSTD_COMPRESSOR = zstd.ZstdCompressor(level=19)
+_ZSTD_DECOMPRESSOR = zstd.ZstdDecompressor()
 
 def try_compress(data: bytes) -> tuple[bytes, bool]:
-    # if len(data) < LZMA_MIN_INPUT:
-        # return data, False
-    compressed = lzma.compress(data, format=lzma.FORMAT_RAW, filters=_LZMA_FILTERS)
+    compressed = _ZSTD_COMPRESSOR.compress(data)
     if len(compressed) < len(data):
         return compressed, True
 
@@ -25,7 +22,7 @@ def try_compress(data: bytes) -> tuple[bytes, bool]:
 def decompress_if_needed(blob: bytes, compressed: bool) -> bytes:
     if not compressed:
         return blob
-    return lzma.decompress(blob, format=lzma.FORMAT_RAW, filters=_LZMA_FILTERS)
+    return _ZSTD_DECOMPRESSOR.decompress(blob)
 
 
 class DedupGetType(Enum):
