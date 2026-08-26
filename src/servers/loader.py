@@ -117,7 +117,12 @@ class ServersLoader:
             if ok:
                 servers_out.append(server)
             else:
-                failed_servers.append(f"{server.ip}:{server.port}")
+                text = server.ip
+                if server_type == "Java" and server.port != 25565:
+                    text += ":25565"
+                if server_type == "Bedrock" and server.port != 19132:
+                    text += ":19132"
+                failed_servers.append(text)
 
         if failed_servers:
             logging.warning(f"{len(failed_servers)} {server_type} servers failed to initialize:")
