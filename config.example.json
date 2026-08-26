@@ -1,18 +1,25 @@
 {
   "server_timeout": 25,
-  "save_every": 120,
+  "save_every": 180,
   "dns_timeout": 20,
+
   "java_version": 776,
+
   "log_dns_timeout": false,
   "log_dns_error": true,
+
   "db_path_java": "mcstatusarchive_java.db",
   "db_path_bedrock": "mcstatusarchive_bedrock.db",
   "servers_json": "servers.json",
+
   "webhook_warn_url": "",
   "webhook_error_url": "",
   "webhook_critical_url": "",
-  "rater_down_threshold": 5,
+
+  "rater_down_threshold": 10,
   "rater_history_size": 5,
   "rater_empty_avg_threshold": 1.0,
-  "rater_burst_threshold": 5
+  "rater_burst_threshold": 5,
+
+  "compression_enabled": false
 }

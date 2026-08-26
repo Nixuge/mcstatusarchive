@@ -37,7 +37,7 @@ Configurator.init()
 
 
 class Timings:
-    SERVER_TIMEOUT = Configurator.get_value("server_timeout", 25)
+    SERVER_TIMEOUT = Configurator.get_value("server_timeout", 180)
     SAVE_EVERY = Configurator.get_value("save_every", 120)
     DNS_TIMEOUT = Configurator.get_value("dns_timeout", 20)
 
@@ -64,7 +64,7 @@ class WebhookUrls:
 
 
 class RaterConfig:
-    DOWN_THRESHOLD = Configurator.get_value("rater_down_threshold", 5)
+    DOWN_THRESHOLD = Configurator.get_value("rater_down_threshold", 10)
     HISTORY_SIZE = Configurator.get_value("rater_history_size", 5)
     EMPTY_AVG_THRESHOLD = Configurator.get_value("rater_empty_avg_threshold", 1.0)
     BURST_THRESHOLD = Configurator.get_value("rater_burst_threshold", 5)
