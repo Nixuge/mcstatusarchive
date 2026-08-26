@@ -1,6 +1,4 @@
 httpx
-# Note: BSON is broken on pip now, install from source
-# https://github.com/py-bson/bson
-#bson
 mcstatus
 pyjson5
+zstandard

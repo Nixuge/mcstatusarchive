@@ -1,15 +1,20 @@
 [Unit]
 Description=McStatusArchive
-After=network.target
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 SyslogIdentifier=mcstatusarchive
-Restart=always
-RestartSec=5
 Type=simple
 User=nix
 WorkingDirectory=/home/nix/mcstatusarchive
-ExecStart=/home/nix/mcstatusarchive/main.py
+ExecStart=/home/nix/mcstatusarchive/.venv/bin/python /home/nix/mcstatusarchive/src/main.py
+# Live \r / ANSI progress lines must not sit in stdout buffering.
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONFAULTHANDLER=1
+KillSignal=SIGINT
+Restart=always
+RestartSec=5
 TimeoutStopSec=30
 
 [Install]

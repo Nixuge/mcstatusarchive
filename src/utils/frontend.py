@@ -5,7 +5,7 @@ from threading import Thread
 from time import sleep
 import httpx
 
-from vars.Errors import ErrorHandler
+from utils.errors import ErrorHandler, ErrorKey
 
 UPDATE_URL = "http://127.0.0.1:50474/update_fields"
 
@@ -54,7 +54,7 @@ class FrontendUpdater(Thread):
             self._send_update(all_updates)
                         
         except:
-            exit_code = ErrorHandler.add_error("frontend")
+            exit_code = ErrorHandler.add_error(ErrorKey.FRONTEND)
             if exit_code > 0: 
                 self.is_running = False
                 exit(exit_code)

@@ -11,6 +11,7 @@ def get_proper_logger(logger: logging.Logger, debugConsole: bool):
     # Console output
     sh = logging.StreamHandler()
     sh.addFilter(FilterSocketExceptions())
+    sh.addFilter(FilterConsoleErrorsplit())
     if debugConsole:
         sh.setLevel(logging.DEBUG)
     else:
@@ -56,6 +57,11 @@ class FilterSocketExceptions(logging.Filter):
         # This shouldn't match any other error message (I hope)
         return not "raised exception." in record.getMessage()
 
+class FilterConsoleErrorsplit(logging.Filter):
+    def filter(self, record):
+        # Only log per-server fail lines to file, not to console
+        return "ERRORSPLIT" not in record.getMessage()
+
 class CustomFormatterConsole(logging.Formatter):
     FORMATS = {
         logging.DEBUG: _get_correctly(COLORS.grey),
@@ -68,19 +74,16 @@ class CustomFormatterConsole(logging.Formatter):
     def format(self, record):
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
-        result = formatter.format(record).replace(".py", "")
-
-        # A bit dirty but makes logs look WAY better
-        if "ERRORSPLIT" in result:
-            return COLORS.yellow + "- " + result.split("ERRORSPLIT")[1]
-        
-        return result
+        return formatter.format(record).replace(".py", "")
 
 class CustomFormatterFile(logging.Formatter):
     format_ = "%(asctime)s [%(levelname)s] %(filename)s:%(lineno)s %(message)s"
 
     def format(self, record):
         formatter = logging.Formatter(self.format_)
-        return formatter.format(record).replace(".py", "")
+        result = formatter.format(record).replace(".py", "")
+        if "ERRORSPLIT" in result:
+            return result.replace("ERRORSPLIT", "- ")
+        return result
 
 #thanks https://stackoverflow.com/a/56944275 & https://stackoverflow.com/a/287944
