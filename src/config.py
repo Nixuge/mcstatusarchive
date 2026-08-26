@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Any
 
 
 class Configurator:
@@ -17,7 +18,7 @@ class Configurator:
             logging.error("Config file contains invalid JSON.")
 
     @classmethod
-    def get_value(cls, key: str, default_value):
+    def get_value(cls, key: str, default_value: Any):
         if cls._CONFIG_DICT is None:
             return default_value
         value = cls._CONFIG_DICT.get(key, None)
@@ -67,3 +68,6 @@ class RaterConfig:
     HISTORY_SIZE = Configurator.get_value("rater_history_size", 5)
     EMPTY_AVG_THRESHOLD = Configurator.get_value("rater_empty_avg_threshold", 1.0)
     BURST_THRESHOLD = Configurator.get_value("rater_burst_threshold", 5)
+
+class CompressionConfig:
+    COMPRESSION_ENABLED = Configurator.get_value("compression_enabled", False)
