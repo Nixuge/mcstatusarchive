@@ -5,15 +5,12 @@ After=network-online.target
 
 [Service]
 SyslogIdentifier=mcstatusarchive
-Type=simple
+Type=forking
 User=nix
 WorkingDirectory=/home/nix/mcstatusarchive
-ExecStart=/home/nix/mcstatusarchive/.venv/bin/python /home/nix/mcstatusarchive/src/main.py
-# Live \r / ANSI progress lines must not sit in stdout buffering.
-Environment=PYTHONUNBUFFERED=1
-Environment=PYTHONFAULTHANDLER=1
-KillSignal=SIGINT
-Restart=always
+ExecStart=/usr/bin/tmux -L mcstatusarchive new-session -d -s mcstatusarchive '/home/nix/mcstatusarchive/.venv/bin/python /home/nix/mcstatusarchive/src/main.py'
+ExecStop=/usr/bin/tmux -L mcstatusarchive send-keys -t mcstatusarchive C-c
+Restart=on-failure
 RestartSec=5
 TimeoutStopSec=30
 
