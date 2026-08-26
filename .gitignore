@@ -7,14 +7,8 @@
 info.txt
 logs/
 config.json
-*.bson
 venv/
 .venv/
-old/
 __init__.py
 __pycache__/
 error/
-
-
-# TEMPORARY
-*.json
