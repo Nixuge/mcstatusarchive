@@ -12,9 +12,9 @@ _ZSTD_COMPRESSOR = zstd.ZstdCompressor(level=19)
 _ZSTD_DECOMPRESSOR = zstd.ZstdDecompressor()
 
 def try_compress(data: bytes) -> tuple[bytes, bool]:
-    compressed = _ZSTD_COMPRESSOR.compress(data)
-    if len(compressed) < len(data):
-        return compressed, True
+    # compressed = _ZSTD_COMPRESSOR.compress(data)
+    # if len(compressed) < len(data):
+    #     return compressed, True
 
     return data, False
 
