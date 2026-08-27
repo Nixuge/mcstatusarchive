@@ -251,6 +251,8 @@ async def run_batch_limit(servers: list, primary_limit: int = 100, max_limit: in
 
 
 async def save_every_x_secs(servers: list, db_java: Database, db_bedrock: Database):
+    httpx_async_client = httpx.AsyncClient()
+
     current_servers = servers
 
     while True:
@@ -272,11 +274,16 @@ async def save_every_x_secs(servers: list, db_java: Database, db_bedrock: Databa
                 KeyListenerData.reload_requested = False
 
         start_time = int(time())
+        
+        kuma_task = httpx_async_client.get(UptimeConfig.KUMA_URL, timeout=10) if UptimeConfig.KUMA_URL else None
+        
         await run_batch_limit(current_servers)
 
-        if UptimeConfig.KUMA_URL:
-            logging.info("[Sending uptime status...]")
-            httpx.get(UptimeConfig.KUMA_URL, timeout=3)
+        if kuma_task:
+            logging.info("[Waiting for uptime status...]")
+            await kuma_task
+            logging.info("[Uptime status done !]")
+            
         
         logging.info("[Waiting for timer to finish...]")
         while start_time + Timings.SAVE_EVERY > int(time()):
