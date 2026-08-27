@@ -55,6 +55,7 @@ class ErrorKey(Enum):
     DEDUPER_GET_EXCEPTION = auto()
     FAVICON_DECODE_FAIL = auto()
     SAVE_EXCEPTION = auto()
+    WARN_LIVE_RELOAD = auto()
 
 
 ERROR_ACTIONS: dict[ErrorKey, list[ErrorAction]] = {
@@ -79,6 +80,7 @@ ERROR_ACTIONS: dict[ErrorKey, list[ErrorAction]] = {
     ErrorKey.DEDUPER_GET_EXCEPTION:  [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
     ErrorKey.FAVICON_DECODE_FAIL:    [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_WARN],
     ErrorKey.SAVE_EXCEPTION:         [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
+    ErrorKey.WARN_LIVE_RELOAD:       [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_WARN]
 }
     
 
