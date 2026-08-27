@@ -20,9 +20,10 @@ from db.database import Database
 from db.schema import SERVER_TYPE_JAVA, SERVER_TYPE_BEDROCK
 from db.deduplicators import DedupGetType
 from config import Paths, Timings
-from utils.errors import ErrorHandler
+from utils.errors import ErrorHandler, ErrorKey
 from servers.base import PollResult, PollStatus
 from servers.loader import ServersLoader
+from utils.keylistener import KeyListenerData, setup_stdin_keylistener
 
 
 # Note: mainly claude'd bc i can't b bothered writing weird ansi escape sequences
@@ -244,17 +245,36 @@ async def run_batch_limit(servers: list, primary_limit: int = 100, max_limit: in
 
     await asyncio.gather(*(poll_worker(s) for s in servers))
 
-async def save_every_x_secs(servers: list):
+
+
+
+async def save_every_x_secs(servers: list, db_java: Database, db_bedrock: Database):
+    current_servers = servers
+
     while True:
         if ErrorHandler.should_stop:
             logging.critical("Stop instruction found. Now stopping the app.")
             return
 
+        if KeyListenerData.reload_requested:
+            logging.info("Reloading servers from servers.json...")
+            try:
+                current_servers = await ServersLoader(Paths.SERVERS_JSON, db_java, db_bedrock).parse()
+                logging.info(f"Reload complete! {len(current_servers)} servers loaded.")
+                ErrorHandler.add_warn(ErrorKey.WARN_LIVE_RELOAD, {"success": True, "new_len": len(current_servers)})
+            except Exception as e:
+                logging.error(f"Failed to reload servers: {e}")
+                ErrorHandler.add_warn(ErrorKey.WARN_LIVE_RELOAD, {"success": False, "error": str(e)})
+            finally:
+                KeyListenerData.reload_requested = False
+
         start_time = int(time())
-        await run_batch_limit(servers)
+        await run_batch_limit(current_servers)
 
         logging.info("[Waiting for timer to finish...]")
         while start_time + Timings.SAVE_EVERY > int(time()):
+            if KeyListenerData.reload_requested or ErrorHandler.should_stop:
+                break
             await asyncio.sleep(.01)
 
 
@@ -267,11 +287,16 @@ async def main():
     servers = await ServersLoader(Paths.SERVERS_JSON, db_java, db_bedrock).parse()
     logging.info(f"{len(servers)} servers loaded.")
 
+    loop = asyncio.get_running_loop()
+    cleanup_keys = setup_stdin_keylistener(loop)
+
     try:
-        await save_every_x_secs(servers)
-    except asyncio.CancelledError:
+        await save_every_x_secs(servers, db_java, db_bedrock)
+    except (asyncio.CancelledError, KeyboardInterrupt):
         ErrorHandler.should_stop = True
         logging.info("Excepting a graceful stop soon.")
+    
+    cleanup_keys()
 
 if __name__ == "__main__":
     asyncio.run(main())
