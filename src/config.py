@@ -71,3 +71,6 @@ class RaterConfig:
 
 class CompressionConfig:
     COMPRESSION_ENABLED = Configurator.get_value("compression_enabled", False)
+
+class UptimeConfig:
+    KUMA_URL = Configurator.get_value("kuma_url", "")

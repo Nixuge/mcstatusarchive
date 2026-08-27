@@ -21,5 +21,7 @@
   "rater_empty_avg_threshold": 1.0,
   "rater_burst_threshold": 5,
 
-  "compression_enabled": false
+  "compression_enabled": false,
+
+  "kuma_url": ""
 }

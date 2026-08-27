@@ -1,5 +1,7 @@
 import os
 import sys
+
+import httpx
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import asyncio
@@ -19,7 +21,7 @@ import shutil
 from db.database import Database
 from db.schema import SERVER_TYPE_JAVA, SERVER_TYPE_BEDROCK
 from db.deduplicators import DedupGetType
-from config import Paths, Timings
+from config import Paths, Timings, UptimeConfig
 from utils.errors import ErrorHandler, ErrorKey
 from servers.base import PollResult, PollStatus
 from servers.loader import ServersLoader
@@ -272,6 +274,10 @@ async def save_every_x_secs(servers: list, db_java: Database, db_bedrock: Databa
         start_time = int(time())
         await run_batch_limit(current_servers)
 
+        if UptimeConfig.KUMA_URL:
+            logging.info("[Sending uptime status...]")
+            httpx.get(UptimeConfig.KUMA_URL, timeout=3)
+        
         logging.info("[Waiting for timer to finish...]")
         while start_time + Timings.SAVE_EVERY > int(time()):
             if KeyListenerData.reload_requested or ErrorHandler.should_stop:
