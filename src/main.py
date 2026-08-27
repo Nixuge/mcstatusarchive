@@ -275,7 +275,7 @@ async def save_every_x_secs(servers: list, db_java: Database, db_bedrock: Databa
 
         start_time = int(time())
         
-        kuma_task = httpx_async_client.get(UptimeConfig.KUMA_URL, timeout=10) if UptimeConfig.KUMA_URL else None
+        kuma_task = asyncio.create_task(httpx_async_client.get(UptimeConfig.KUMA_URL, timeout=10)) if UptimeConfig.KUMA_URL else None
         
         await run_batch_limit(current_servers)
 
