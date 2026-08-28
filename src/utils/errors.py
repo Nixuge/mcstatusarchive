@@ -1,8 +1,10 @@
+import asyncio
 import json
 import logging
 import traceback
-import urllib.request
 from enum import Enum, auto
+
+import httpx
 
 from config import WebhookUrls
 
@@ -56,6 +58,7 @@ class ErrorKey(Enum):
     FAVICON_DECODE_FAIL = auto()
     SAVE_EXCEPTION = auto()
     WARN_LIVE_RELOAD = auto()
+    DB_FIELDS_EXPANDED = auto()
 
 
 ERROR_ACTIONS: dict[ErrorKey, list[ErrorAction]] = {
@@ -80,11 +83,13 @@ ERROR_ACTIONS: dict[ErrorKey, list[ErrorAction]] = {
     ErrorKey.DEDUPER_GET_EXCEPTION:  [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
     ErrorKey.FAVICON_DECODE_FAIL:    [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_WARN],
     ErrorKey.SAVE_EXCEPTION:         [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_ERROR],
-    ErrorKey.WARN_LIVE_RELOAD:       [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_WARN]
+    ErrorKey.WARN_LIVE_RELOAD:       [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_WARN],
+    ErrorKey.DB_FIELDS_EXPANDED:     [ErrorAction.LOG_ERROR, ErrorAction.WEBHOOK_WARN],
 }
     
 
 class ErrorHandler:
+    httpx_async = httpx.AsyncClient()
     _errors_counts: dict[ErrorKey, int] = {}
     should_stop = False
 
@@ -125,12 +130,13 @@ class ErrorHandler:
                 logging.critical(str(data))
         if ErrorAction.TRACEBACK in error_actions:
             traceback.print_exc()
+        
         if ErrorAction.WEBHOOK_WARN in error_actions:
-            cls._send_webhook(error_label, data, level="warn")
+            asyncio.create_task(cls._send_webhook(error_label, data, level="warn"))
         if ErrorAction.WEBHOOK_ERROR in error_actions:
-            cls._send_webhook(error_label, data, level="error")
+            asyncio.create_task(cls._send_webhook(error_label, data, level="error"))
         if ErrorAction.WEBHOOK_CRITICAL in error_actions:
-            cls._send_webhook(error_label, data, level="critical")
+            asyncio.create_task(cls._send_webhook(error_label, data, level="critical"))
 
         if ErrorAction.EXIT_ALL in error_actions:
             cls.should_stop = True
@@ -160,7 +166,8 @@ class ErrorHandler:
         return index_err + 1 # 1 is reserved for "unknown errors"
 
     @classmethod
-    def _send_webhook(cls, error: str, data: dict | None, level: str):
+    async def _send_webhook(cls, error: str, data: dict | None, level: str):
+        logging.warning("Sending webhook.")
         url_map = {
             "warn": WebhookUrls.WARN,
             "error": WebhookUrls.ERROR,
@@ -189,16 +196,15 @@ class ErrorHandler:
         }).encode("utf-8")
 
         try:
-            req = urllib.request.Request(
+            req = await cls.httpx_async.post(
                 url,
-                data=payload,
+                content=payload,
                 headers={
                     "User-Agent": "mcstatusarchive-messager",
                     "Content-Type": "application/json"
                     },
-                method="POST",
+                timeout=5
             )
-            urllib.request.urlopen(req, timeout=5)
         except Exception as e:
             logging.warning(f"Failed to send webhook: {e}")
 
