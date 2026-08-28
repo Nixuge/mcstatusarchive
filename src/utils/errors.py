@@ -167,7 +167,6 @@ class ErrorHandler:
 
     @classmethod
     async def _send_webhook(cls, error: str, data: dict | None, level: str):
-        logging.warning("Sending webhook.")
         url_map = {
             "warn": WebhookUrls.WARN,
             "error": WebhookUrls.ERROR,

@@ -70,25 +70,77 @@ class Database:
                     f"code expects '{self.server_type}'"
                 )
 
-        row = self.cursor.execute(
-            "SELECT value FROM db_meta WHERE key = 'metric_fields'"
-        ).fetchone()
-        if row is None:
-            self.cursor.execute(
-                "INSERT INTO db_meta (key, value) VALUES ('metric_fields', ?)",
-                (json.dumps(METRIC_FIELDS.get(self.server_type, {})),),
-            )
-
-        row = self.cursor.execute(
-            "SELECT value FROM db_meta WHERE key = 'text_fields'"
-        ).fetchone()
-        if row is None:
-            self.cursor.execute(
-                "INSERT INTO db_meta (key, value) VALUES ('text_fields', ?)",
-                (json.dumps(TEXT_FIELDS.get(self.server_type, {})),),
-            )
+        self._validate_and_sync_fields("metric_fields", METRIC_FIELDS.get(self.server_type, {}))
+        self._validate_and_sync_fields("text_fields", TEXT_FIELDS.get(self.server_type, {}))
 
         self.conn.commit()
+
+    def _validate_and_sync_fields(self, meta_key: str, code_fields: dict[str, int]):
+        row = self.cursor.execute(
+            "SELECT value FROM db_meta WHERE key = ?", (meta_key,)
+        ).fetchone()
+        if row is None:
+            self.cursor.execute(
+                "INSERT INTO db_meta (key, value) VALUES (?, ?)",
+                (meta_key, json.dumps(code_fields)),
+            )
+            return
+
+        try:
+            db_fields: dict[str, int] = json.loads(row[0])
+            if not isinstance(db_fields, dict):
+                raise ValueError("Value in db_meta is not a dictionary")
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to parse {meta_key} from db_meta in '{self.db_path}': {e}. Raw content: {row[0]!r}"
+            )
+
+        for name, db_id in db_fields.items():
+            if name not in code_fields:
+                raise RuntimeError(
+                    f"Field mapping conflict: field '{name}' exists in DB {meta_key} (id={db_id}) "
+                    f"but is missing in code for {self.server_type} in '{self.db_path}'! "
+                    f"DB: {db_fields} vs Code: {code_fields}"
+                )
+            if code_fields[name] != db_id:
+                raise RuntimeError(
+                    f"Field ID mismatch for '{name}' in {meta_key} ({self.server_type}) in '{self.db_path}'! "
+                    f"DB has id={db_id}, but code has id={code_fields[name]}. "
+                    f"DB: {db_fields} vs Code: {code_fields}"
+                )
+
+        code_id_to_name = {v: k for k, v in code_fields.items()}
+        for name, db_id in db_fields.items():
+            if code_id_to_name.get(db_id) != name:
+                raise RuntimeError(
+                    f"Field ID collision: ID {db_id} is tied to '{name}' in DB {meta_key}, "
+                    f"but tied to '{code_id_to_name.get(db_id)}' in code for {self.server_type} in '{self.db_path}'!"
+                )
+
+        if len(code_fields) < len(db_fields):
+            raise RuntimeError(
+                f"Fewer {meta_key} in code ({len(code_fields)}) than in DB ({len(db_fields)}) for '{self.db_path}'! "
+                f"DB: {db_fields} vs Code: {code_fields}"
+            )
+        elif len(code_fields) > len(db_fields):
+            added_fields = {k: v for k, v in code_fields.items() if k not in db_fields}
+            logging.warning(
+                f"Expanding {meta_key} for {self.server_type} in '{self.db_path}'. "
+                f"Adding new fields: {added_fields}"
+            )
+            data = {
+                "server_type": self.server_type,
+                "field_type": meta_key,
+                "db_path": self.db_path,
+                "previous_fields": db_fields,
+                "new_fields": code_fields,
+                "added_fields": added_fields,
+            }
+            ErrorHandler.add_error(ErrorKey.DB_FIELDS_EXPANDED, data)
+            self.cursor.execute(
+                "UPDATE db_meta SET value = ? WHERE key = ?",
+                (json.dumps(code_fields), meta_key),
+            )
 
     def execute_batch(self, batch: list[BatchEntry]) -> set[str]:
         failed_keys: set[str] = set()
