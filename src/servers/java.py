@@ -54,6 +54,8 @@ class JavaServerSv(ServerSv):
             self.rater.report_down()
             return PollResult(status=PollStatus.FAIL)
 
+        # key_checker(self.ip, status.raw)
+        
         try:
             data, player_dedups = self.get_values_dict(status)
             changed = self.diff_values(data)
@@ -101,6 +103,9 @@ class JavaServerSv(ServerSv):
             "motd": self._parse_motd(status),
             "favicon": self._get_favicon(status.icon),
             "enforces_secure_chat": self._optbool_to_int(status.enforces_secure_chat),
+            "prevents_chat_reports": self._optbool_to_int(status.raw.get("preventsChatReports")),
+            "is_modded": self._optbool_to_int(status.raw.get("isModded")),
+            "cosmic_proxy": self._get_cosmic_proxy(status),
             **self._get_forge_data(status.forge_data),
         }
         return values, player_dedups
@@ -143,6 +148,18 @@ class JavaServerSv(ServerSv):
         # Player order can vary so just in case sort so that it's always the same order
         player_ids.sort()
         return ",".join(str(p_id) for p_id in player_ids), player_dedups
+
+    @staticmethod
+    def _get_cosmic_proxy(response: JavaStatusResponse) -> str:
+        res = response.raw.get("cosmic")
+        if not res:
+            return ""
+        
+        proxy = res.get("proxy")
+        if not proxy:
+            return ""
+        
+        return proxy
 
     @staticmethod
     def _optbool_to_int(val: bool | None) -> int:

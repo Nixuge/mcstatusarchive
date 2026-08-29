@@ -12,6 +12,8 @@ JAVA_METRIC_FIELDS = {
     "enforces_secure_chat":      4,
     "forge_fml_network_version": 5,
     "forge_truncated":           6,
+    "prevents_chat_reports":       7,
+    "is_modded":                  8,
 }
 
 JAVA_TEXT_FIELDS = {
@@ -21,6 +23,7 @@ JAVA_TEXT_FIELDS = {
     "favicon":         3,
     "forge_channels":  4,
     "forge_mods":      5,
+    "cosmic_proxy":    6,
 }
 
 
